@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #030712;
+    color: #e2e8f0;
+    overflow-x: hidden;
+  }
+}
+
+/* Glassmorphism custom classes */
+.glass-panel {
+  background: rgba(8, 17, 31, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-glow {
+  background: rgba(11, 20, 36, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  box-shadow: 0 0 25px rgba(0, 229, 255, 0.12);
+}
+
+.glass-panel-elevated {
+  background: rgba(17, 30, 53, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Custom Scrollbar for medical AI panels */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050914;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.2);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.45);
+}
+
+/* Subtle grid background */
+.bg-medical-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+}
+
+/* ECG pulse glow animation */
+@keyframes ecgGlow {
+  0%, 100% { filter: drop-shadow(0 0 2px #00E5FF); }
+  50% { filter: drop-shadow(0 0 8px #00E5FF); }
+}
+
+.ecg-line-glow {
+  animation: ecgGlow 2s ease-in-out infinite;
+}
