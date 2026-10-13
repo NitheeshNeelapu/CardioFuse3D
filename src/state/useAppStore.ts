@@ -5,7 +5,6 @@ import { Patient, PatientInput, ECGMetrics } from '../types/patient';
 import { PredictionResult, VesselEvidence } from '../types/model';
 import { apiClient } from '../api/client';
 import { PIPELINE_STAGES } from '../data/pipelineStages';
-import { GeminiExplanationResponse } from '../api/types';
 import { demoPatient01, DEMO_PATIENTS } from '../data/demoPatient';
 import { computeDemoPrediction, getDemoVesselEvidence } from '../data/demoPredictions';
 
@@ -58,6 +57,10 @@ export interface AppState {
   error: string | null;
 
   // 3D Controls
+  viewMode: '3d' | 'schematic';
+  setViewMode: (mode: '3d' | 'schematic') => void;
+  hoveredVessel: Vessel | null;
+  setHoveredVessel: (vessel: Vessel | null) => void;
   autoRotate: boolean;
   setAutoRotate: (val: boolean) => void;
   resetCameraTrigger: number;
@@ -86,11 +89,6 @@ export interface AppState {
   refreshAnalysis: () => Promise<void>;
   retryAnalysis: () => Promise<void>;
   setError: (err: string | null) => void;
-
-  geminiExplanation: GeminiExplanationResponse | null;
-  geminiExplanationLoading: boolean;
-  geminiExplanationError: string | null;
-  requestGeminiExplanation: () => Promise<void>;
 }
 
 const initialModalities: ModalityState = {
@@ -216,10 +214,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   prediction: initialPrediction,
   evidence: initialEvidence,
   error: null,
-  geminiExplanation: null,
-  geminiExplanationLoading: false,
-  geminiExplanationError: null,
 
+  viewMode: '3d',
+  setViewMode: (val) => set({ viewMode: val }),
+  hoveredVessel: null,
+  setHoveredVessel: (val) => set({ hoveredVessel: val }),
   autoRotate: true,
   setAutoRotate: (val) => set({ autoRotate: val }),
   resetCameraTrigger: 0,
@@ -269,9 +268,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       prediction: initialPrediction,
       evidence: initialEvidence,
       error: null,
-      geminiExplanation: null,
-      geminiExplanationLoading: false,
-      geminiExplanationError: null,
       autoRotate: true,
       analysisStatus: 'complete',
     });
@@ -427,44 +423,5 @@ export const useAppStore = create<AppState>((set, get) => ({
       get().setSimulateApiFailure(false);
     }
     await get().refreshAnalysis();
-  },
-
-  requestGeminiExplanation: async () => {
-    const { patientInput, selectedVessel, activeModalities } = get();
-
-    if (!patientInput) {
-      set({
-        geminiExplanation: null,
-        geminiExplanationError: 'Enter patient data before requesting an explanation.',
-      });
-      return;
-    }
-
-    set({
-      geminiExplanationLoading: true,
-      geminiExplanationError: null,
-      geminiExplanation: null,
-    });
-
-    try {
-      const result = await apiClient.getGeminiExplanation(
-        patientInput,
-        selectedVessel,
-        activeModalities
-      );
-
-      set({
-        geminiExplanation: result,
-        geminiExplanationError: null,
-      });
-    } catch (err: unknown) {
-      set({
-        geminiExplanation: null,
-        geminiExplanationError:
-          err instanceof Error ? err.message : 'Unable to retrieve the Gemini explanation.',
-      });
-    } finally {
-      set({ geminiExplanationLoading: false });
-    }
   },
 }));

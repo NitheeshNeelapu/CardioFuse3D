@@ -136,9 +136,6 @@ export const RiskPanel: React.FC = () => {
               </span>
             </div>
           </div>
-          <Badge variant="amber" className="text-[9px] whitespace-normal text-center sm:text-right">
-            SYNTHETIC DEMONSTRATION OUTPUT — NOT CLINICALLY VALIDATED
-          </Badge>
         </div>
 
         {/* Selected Vessel Synthetic Demo Score Highlight */}

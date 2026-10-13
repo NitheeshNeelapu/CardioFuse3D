@@ -15,11 +15,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   return (
     <div className="min-h-screen flex flex-col bg-[#030712] text-slate-100 font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
       {/* Persistent Top Safety Banner */}
-      <div className="w-full bg-amber-500/10 border-b border-amber-500/25 px-4 py-1.5 text-center text-[11px] font-mono font-bold text-amber-300 flex items-center justify-center gap-2 select-none z-50">
-        <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-        <span>
-          RESEARCH PROTOTYPE • Model-derived outputs are not medical diagnoses • Synthetic demonstration data
-        </span>
+      <div className="w-full bg-amber-500/10 border-b border-amber-500/25 px-3 py-1 text-center text-[10px] sm:text-[11px] font-mono font-bold text-amber-300 flex items-center justify-center gap-1.5 select-none z-50 whitespace-nowrap">
+        <AlertTriangle className="w-3 h-3 text-amber-400 flex-shrink-0" />
+        <span className="truncate">Research prototype • synthetic demo data</span>
       </div>
 
       {/* Main Header */}

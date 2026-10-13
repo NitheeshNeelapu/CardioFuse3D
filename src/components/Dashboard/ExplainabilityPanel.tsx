@@ -1,19 +1,14 @@
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
 import { useAppStore } from '../../state/useAppStore';
 import { GlassCard } from '../common/GlassCard';
 import { Badge } from '../common/Badge';
-import { Sparkles, BarChart2, AlertCircle, Info } from 'lucide-react';
+import { Sparkles, BarChart2, AlertCircle } from 'lucide-react';
 import { Modality } from '../../types/modality';
 
 export const ExplainabilityPanel: React.FC = () => {
   const prediction = useAppStore((s) => s.prediction);
   const selectedVessel = useAppStore((s) => s.selectedVessel);
   const modalities = useAppStore((s) => s.modalities);
-  const geminiExplanation = useAppStore((s) => s.geminiExplanation);
-  const geminiExplanationLoading = useAppStore((s) => s.geminiExplanationLoading);
-  const geminiExplanationError = useAppStore((s) => s.geminiExplanationError);
-  const requestGeminiExplanation = useAppStore((s) => s.requestGeminiExplanation);
 
   if (!prediction) return null;
 
@@ -99,7 +94,7 @@ export const ExplainabilityPanel: React.FC = () => {
         </div>
       </GlassCard>
 
-      {/* 2. AI Insight Card (Distinctive visual styling) */}
+      {/* 2. AI Insight Card */}
       <GlassCard
         borderVariant="violet"
         glow={true}
@@ -129,83 +124,6 @@ export const ExplainabilityPanel: React.FC = () => {
             {prediction.aiInsight.requiredAction || 'Clinical interpretation requires qualified medical assessment.'}
           </span>
         </div>
-      </GlassCard>
-
-      <GlassCard borderVariant="violet" padding="md">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-violet-400" />
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
-              Gemini Evidence Explanation
-            </h4>
-          </div>
-          <Badge variant="demo-output" className="text-[9px]">
-            NOT CLINICALLY VALIDATED
-          </Badge>
-        </div>
-
-        <p className="text-[11px] text-slate-400 mb-3">
-          Explains the entered information and evidence gaps. This is not a
-          diagnostic or cardiovascular risk prediction.
-        </p>
-
-        <button
-          type="button"
-          onClick={() => void requestGeminiExplanation()}
-          disabled={geminiExplanationLoading}
-          className="px-3 py-2 rounded-lg bg-violet-500/20 border border-violet-400/30 text-violet-200 text-xs font-semibold disabled:opacity-50"
-        >
-          {geminiExplanationLoading ? 'Generating explanation…' : 'Generate Gemini Explanation'}
-        </button>
-
-        {geminiExplanationError && (
-          <div role="alert" className="mt-3 text-xs text-amber-300">
-            {geminiExplanationError}
-          </div>
-        )}
-
-        {geminiExplanation && (
-          <div className="mt-4 space-y-3">
-            <div className="text-xs text-slate-200 leading-relaxed">
-              <ReactMarkdown
-                components={{
-                  h1: ({ node, ...props }) => (
-                    <h1 className="text-sm font-bold text-violet-200 mt-3 mb-1.5 font-mono" {...props} />
-                  ),
-                  h2: ({ node, ...props }) => (
-                    <h2 className="text-xs font-bold text-violet-300 mt-3 mb-1 font-mono uppercase tracking-wider" {...props} />
-                  ),
-                  h3: ({ node, ...props }) => (
-                    <h3 className="text-xs font-bold text-cyan-300 mt-2.5 mb-1 font-mono tracking-wide" {...props} />
-                  ),
-                  h4: ({ node, ...props }) => (
-                    <h4 className="text-xs font-semibold text-violet-300 mt-2 mb-1" {...props} />
-                  ),
-                  p: ({ node, ...props }) => (
-                    <p className="text-xs text-slate-200 leading-relaxed mb-2.5" {...props} />
-                  ),
-                  strong: ({ node, ...props }) => (
-                    <strong className="font-semibold text-white" {...props} />
-                  ),
-                  ul: ({ node, ...props }) => (
-                    <ul className="list-disc list-inside space-y-1 mb-2.5 text-xs text-slate-300 pl-1" {...props} />
-                  ),
-                  ol: ({ node, ...props }) => (
-                    <ol className="list-decimal list-inside space-y-1 mb-2.5 text-xs text-slate-300 pl-1" {...props} />
-                  ),
-                  li: ({ node, ...props }) => (
-                    <li className="text-xs text-slate-300 leading-relaxed" {...props} />
-                  ),
-                }}
-              >
-                {geminiExplanation.explanation}
-              </ReactMarkdown>
-            </div>
-            <p className="text-[10px] text-slate-400 leading-relaxed">
-              {geminiExplanation.disclaimer}
-            </p>
-          </div>
-        )}
       </GlassCard>
     </div>
   );

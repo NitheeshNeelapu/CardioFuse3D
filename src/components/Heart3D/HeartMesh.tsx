@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { useAppStore } from '../../state/useAppStore';
@@ -6,10 +6,11 @@ import { VesselMesh } from './VesselMesh';
 
 export const HeartMesh: React.FC = () => {
   const autoRotate = useAppStore((s) => s.autoRotate);
+  const hoveredVessel = useAppStore((s) => s.hoveredVessel);
   const heartGroupRef = useRef<THREE.Group>(null);
   const muscleGroupRef = useRef<THREE.Group>(null);
 
-  // Aorta Arch curve
+  // Curves for Great Vessels
   const aortaCurve = useMemo(() => {
     return new THREE.CatmullRomCurve3([
       new THREE.Vector3(-0.15, 0.9, 0.15),
@@ -22,7 +23,6 @@ export const HeartMesh: React.FC = () => {
     ]);
   }, []);
 
-  // Pulmonary Trunk curve
   const pulmonaryCurve = useMemo(() => {
     return new THREE.CatmullRomCurve3([
       new THREE.Vector3(0.05, 0.85, 0.45),
@@ -32,88 +32,155 @@ export const HeartMesh: React.FC = () => {
     ]);
   }, []);
 
-  const aortaGeo = useMemo(() => new THREE.TubeGeometry(aortaCurve, 40, 0.19, 16, false), [aortaCurve]);
-  const pulmonaryGeo = useMemo(() => new THREE.TubeGeometry(pulmonaryCurve, 32, 0.17, 16, false), [pulmonaryCurve]);
+  const branch1Curve = useMemo(
+    () =>
+      new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.28, 1.85, 0.0),
+        new THREE.Vector3(-0.22, 2.25, 0.05),
+      ]),
+    []
+  );
+  const branch2Curve = useMemo(
+    () =>
+      new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.4, 1.93, -0.1),
+        new THREE.Vector3(-0.42, 2.3, -0.1),
+      ]),
+    []
+  );
+  const branch3Curve = useMemo(
+    () =>
+      new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.55, 1.85, -0.25),
+        new THREE.Vector3(-0.62, 2.25, -0.3),
+      ]),
+    []
+  );
 
-  // Brachiocephalic branch vessels
-  const branch1Curve = useMemo(() => new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-0.28, 1.85, 0.0),
-    new THREE.Vector3(-0.22, 2.25, 0.05),
-  ]), []);
-  const branch2Curve = useMemo(() => new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-0.4, 1.93, -0.1),
-    new THREE.Vector3(-0.42, 2.3, -0.1),
-  ]), []);
-  const branch3Curve = useMemo(() => new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-0.55, 1.85, -0.25),
-    new THREE.Vector3(-0.62, 2.25, -0.3),
-  ]), []);
+  // Lower detail geometries (spheres 20x16, cone 24, tubes max 40/8-10 radial)
+  const lvConeGeo = useMemo(() => new THREE.ConeGeometry(1.05, 1.85, 24), []);
+  const rvSphereGeo = useMemo(() => new THREE.SphereGeometry(0.82, 20, 16), []);
+  const laSphereGeo = useMemo(() => new THREE.SphereGeometry(0.55, 20, 16), []);
+  const raSphereGeo = useMemo(() => new THREE.SphereGeometry(0.58, 20, 16), []);
+  const sulcusGeo = useMemo(() => new THREE.BoxGeometry(0.06, 1.55, 0.06), []);
+  const svcCylinderGeo = useMemo(() => new THREE.CylinderGeometry(0.16, 0.16, 0.8, 14), []);
+  const ivcCylinderGeo = useMemo(() => new THREE.CylinderGeometry(0.15, 0.15, 0.5, 14), []);
+  const paBranch1Geo = useMemo(() => new THREE.CylinderGeometry(0.11, 0.11, 0.6, 12), []);
+  const paBranch2Geo = useMemo(() => new THREE.CylinderGeometry(0.11, 0.11, 0.6, 12), []);
 
-  const branch1Geo = useMemo(() => new THREE.TubeGeometry(branch1Curve, 16, 0.05, 10, false), [branch1Curve]);
-  const branch2Geo = useMemo(() => new THREE.TubeGeometry(branch2Curve, 16, 0.045, 10, false), [branch2Curve]);
-  const branch3Geo = useMemo(() => new THREE.TubeGeometry(branch3Curve, 16, 0.045, 10, false), [branch3Curve]);
+  const aortaGeo = useMemo(() => new THREE.TubeGeometry(aortaCurve, 40, 0.19, 10, false), [aortaCurve]);
+  const pulmonaryGeo = useMemo(() => new THREE.TubeGeometry(pulmonaryCurve, 32, 0.17, 10, false), [pulmonaryCurve]);
+  const branch1Geo = useMemo(() => new THREE.TubeGeometry(branch1Curve, 16, 0.05, 8, false), [branch1Curve]);
+  const branch2Geo = useMemo(() => new THREE.TubeGeometry(branch2Curve, 16, 0.045, 8, false), [branch2Curve]);
+  const branch3Geo = useMemo(() => new THREE.TubeGeometry(branch3Curve, 16, 0.045, 8, false), [branch3Curve]);
 
-  // Translucent / Crystalline / Futuristic Glass Materials
+  // MeshStandardMaterial without transmission/ior for WebGL stability and high framerate
   const crystallineCardiacMaterial = useMemo(() => {
-    return new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color('#0F1F38'), // Dark navy base
+    return new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#0F1F38'),
       emissive: new THREE.Color('#0A1526'),
       emissiveIntensity: 0.3,
-      roughness: 0.2,
+      roughness: 0.25,
       metalness: 0.1,
       transparent: true,
       opacity: 0.88,
-      transmission: 0.45, // Glass / translucent look
-      ior: 1.35,
-      reflectivity: 0.5,
     });
   }, []);
 
   const crystallineAtriumMaterial = useMemo(() => {
-    return new THREE.MeshPhysicalMaterial({
+    return new THREE.MeshStandardMaterial({
       color: new THREE.Color('#132746'),
       emissive: new THREE.Color('#0D1B33'),
       emissiveIntensity: 0.25,
-      roughness: 0.25,
+      roughness: 0.3,
       metalness: 0.1,
       transparent: true,
-      opacity: 0.82,
-      transmission: 0.4,
-      ior: 1.3,
+      opacity: 0.85,
     });
   }, []);
 
   const aortaGlassMaterial = useMemo(() => {
-    return new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color('#881337'), // Rich rose/crimson
+    return new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#881337'),
       emissive: new THREE.Color('#BE123C'),
       emissiveIntensity: 0.35,
-      roughness: 0.15,
+      roughness: 0.2,
       metalness: 0.2,
       transparent: true,
-      opacity: 0.85,
-      transmission: 0.3,
-      ior: 1.35,
+      opacity: 0.88,
     });
   }, []);
 
   const pulmonaryGlassMaterial = useMemo(() => {
-    return new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color('#1E3A8A'), // Deep blue
+    return new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#1E3A8A'),
       emissive: new THREE.Color('#2563EB'),
       emissiveIntensity: 0.3,
-      roughness: 0.2,
+      roughness: 0.25,
       metalness: 0.2,
       transparent: true,
-      opacity: 0.85,
-      transmission: 0.3,
-      ior: 1.35,
+      opacity: 0.88,
     });
   }, []);
 
-  // Heartbeat pulse & gentle rotation
+  const sulcusMaterial = useMemo(() => {
+    return new THREE.MeshBasicMaterial({
+      color: new THREE.Color('#00E5FF'),
+      transparent: true,
+      opacity: 0.3,
+    });
+  }, []);
+
+  // Dispose geometries and materials on unmount
+  useEffect(() => {
+    return () => {
+      lvConeGeo.dispose();
+      rvSphereGeo.dispose();
+      laSphereGeo.dispose();
+      raSphereGeo.dispose();
+      sulcusGeo.dispose();
+      svcCylinderGeo.dispose();
+      ivcCylinderGeo.dispose();
+      paBranch1Geo.dispose();
+      paBranch2Geo.dispose();
+      aortaGeo.dispose();
+      pulmonaryGeo.dispose();
+      branch1Geo.dispose();
+      branch2Geo.dispose();
+      branch3Geo.dispose();
+
+      crystallineCardiacMaterial.dispose();
+      crystallineAtriumMaterial.dispose();
+      aortaGlassMaterial.dispose();
+      pulmonaryGlassMaterial.dispose();
+      sulcusMaterial.dispose();
+    };
+  }, [
+    lvConeGeo,
+    rvSphereGeo,
+    laSphereGeo,
+    raSphereGeo,
+    sulcusGeo,
+    svcCylinderGeo,
+    ivcCylinderGeo,
+    paBranch1Geo,
+    paBranch2Geo,
+    aortaGeo,
+    pulmonaryGeo,
+    branch1Geo,
+    branch2Geo,
+    branch3Geo,
+    crystallineCardiacMaterial,
+    crystallineAtriumMaterial,
+    aortaGlassMaterial,
+    pulmonaryGlassMaterial,
+    sulcusMaterial,
+  ]);
+
+  // Heartbeat pulse & gentle rotation (paused on hover or when autoRotate is false)
   useFrame((state, delta) => {
-    if (heartGroupRef.current && autoRotate) {
+    const isPaused = Boolean(hoveredVessel);
+    if (heartGroupRef.current && autoRotate && !isPaused) {
       heartGroupRef.current.rotation.y += delta * 0.32;
     }
 
@@ -122,7 +189,9 @@ export const HeartMesh: React.FC = () => {
       const t = state.clock.getElapsedTime() * 3.4;
       const beat1 = Math.sin(t);
       const beat2 = Math.sin(t + 0.35);
-      const pulse = Math.max(0, beat1 * beat1 * beat1) * 0.03 + Math.max(0, beat2 * beat2 * beat2) * 0.018;
+      const pulse =
+        Math.max(0, beat1 * beat1 * beat1) * 0.03 +
+        Math.max(0, beat2 * beat2 * beat2) * 0.018;
 
       muscleGroupRef.current.scale.set(1 + pulse, 1 + pulse, 1 + pulse);
     }
@@ -130,43 +199,60 @@ export const HeartMesh: React.FC = () => {
 
   return (
     <group ref={heartGroupRef} position={[0, -0.1, 0]}>
-      {/* Cardiac muscle mass (crystalline translucent) */}
+      {/* Cardiac muscle mass */}
       <group ref={muscleGroupRef}>
-        {/* Left Ventricle (Larger apex pointing down & anterior-left) */}
-        <mesh position={[-0.15, -0.3, 0.05]} rotation={[0.1, 0.15, -0.25]} material={crystallineCardiacMaterial}>
-          <coneGeometry args={[1.05, 1.85, 32]} />
-        </mesh>
+        {/* Left Ventricle */}
+        <mesh
+          position={[-0.15, -0.3, 0.05]}
+          rotation={[0.1, 0.15, -0.25]}
+          geometry={lvConeGeo}
+          material={crystallineCardiacMaterial}
+        />
 
-        {/* Right Ventricle (Anterior curvature) */}
-        <mesh position={[0.42, -0.15, 0.25]} rotation={[0.0, -0.2, 0.18]} material={crystallineCardiacMaterial}>
-          <sphereGeometry args={[0.82, 32, 24]} />
-        </mesh>
+        {/* Right Ventricle */}
+        <mesh
+          position={[0.42, -0.15, 0.25]}
+          rotation={[0.0, -0.2, 0.18]}
+          geometry={rvSphereGeo}
+          material={crystallineCardiacMaterial}
+        />
 
         {/* Left Atrium */}
-        <mesh position={[-0.48, 0.75, -0.25]} material={crystallineAtriumMaterial}>
-          <sphereGeometry args={[0.55, 24, 20]} />
-        </mesh>
+        <mesh
+          position={[-0.48, 0.75, -0.25]}
+          geometry={laSphereGeo}
+          material={crystallineAtriumMaterial}
+        />
 
         {/* Right Atrium */}
-        <mesh position={[0.68, 0.65, 0.15]} material={crystallineAtriumMaterial}>
-          <sphereGeometry args={[0.58, 24, 20]} />
-        </mesh>
+        <mesh
+          position={[0.68, 0.65, 0.15]}
+          geometry={raSphereGeo}
+          material={crystallineAtriumMaterial}
+        />
 
         {/* Interventricular sulcus groove with cyan fiber glow */}
-        <mesh position={[0.05, -0.15, 0.75]} rotation={[0, 0, -0.15]}>
-          <boxGeometry args={[0.06, 1.55, 0.06]} />
-          <meshBasicMaterial color="#00E5FF" transparent opacity={0.3} />
-        </mesh>
+        <mesh
+          position={[0.05, -0.15, 0.75]}
+          rotation={[0, 0, -0.15]}
+          geometry={sulcusGeo}
+          material={sulcusMaterial}
+        />
 
         {/* Superior Vena Cava */}
-        <mesh position={[0.85, 1.25, 0.05]} material={pulmonaryGlassMaterial}>
-          <cylinderGeometry args={[0.16, 0.16, 0.8, 20]} />
-        </mesh>
+        <mesh
+          position={[0.85, 1.25, 0.05]}
+          geometry={svcCylinderGeo}
+          material={pulmonaryGlassMaterial}
+        />
 
         {/* Inferior Vena Cava */}
-        <mesh position={[0.75, -0.9, -0.15]} material={pulmonaryGlassMaterial}>
-          <cylinderGeometry args={[0.15, 0.15, 0.5, 20]} />
-        </mesh>
+        <mesh
+          position={[0.75, -0.9, -0.15]}
+          geometry={ivcCylinderGeo}
+          material={pulmonaryGlassMaterial}
+        />
+
         {/* Great Vessels */}
         <group>
           <mesh geometry={aortaGeo} material={aortaGlassMaterial} />
@@ -176,17 +262,25 @@ export const HeartMesh: React.FC = () => {
 
           <mesh geometry={pulmonaryGeo} material={pulmonaryGlassMaterial} />
 
-          <mesh position={[-0.55, 1.45, -0.25]} rotation={[0, 0.4, 0.2]} material={pulmonaryGlassMaterial}>
-            <cylinderGeometry args={[0.11, 0.11, 0.6, 16]} />
-          </mesh>
+          <mesh
+            position={[-0.55, 1.45, -0.25]}
+            rotation={[0, 0.4, 0.2]}
+            geometry={paBranch1Geo}
+            material={pulmonaryGlassMaterial}
+          />
 
-          <mesh position={[0.45, 1.4, -0.3]} rotation={[0, -0.4, -0.2]} material={pulmonaryGlassMaterial}>
-            <cylinderGeometry args={[0.11, 0.11, 0.6, 16]} />
-          </mesh>
+          <mesh
+            position={[0.45, 1.4, -0.3]}
+            rotation={[0, -0.4, -0.2]}
+            geometry={paBranch2Geo}
+            material={pulmonaryGlassMaterial}
+          />
         </group>
 
-        {/* Selectable Coronary Arteries (LAD, LCX, RCA) */}
-        <VesselMesh />
+        {/* Coronary Arteries slightly offset outward (0.02) to prevent clipping into heart body */}
+        <group scale={[1.02, 1.02, 1.02]} position={[0, 0, 0.015]}>
+          <VesselMesh />
+        </group>
       </group>
     </group>
   );

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 import { Vessel } from '../../types/vessel';
 import { useAppStore } from '../../state/useAppStore';
@@ -7,89 +7,119 @@ import { VesselLabels } from './VesselLabels';
 export const VesselMesh: React.FC = () => {
   const selectedVessel = useAppStore((s) => s.selectedVessel);
   const setSelectedVessel = useAppStore((s) => s.setSelectedVessel);
+  const hoveredVessel = useAppStore((s) => s.hoveredVessel);
+  const setHoveredVessel = useAppStore((s) => s.setHoveredVessel);
   const prediction = useAppStore((s) => s.prediction);
-  const [hoveredVessel, setHoveredVessel] = useState<Vessel | null>(null);
 
   // 1. LAD Curve (Left Anterior Descending)
   const ladCurve = useMemo(() => {
     return new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-0.35, 0.9, 0.45),
-      new THREE.Vector3(-0.25, 0.6, 0.75),
-      new THREE.Vector3(-0.15, 0.25, 0.92),
-      new THREE.Vector3(-0.05, -0.1, 0.96),
-      new THREE.Vector3(0.08, -0.5, 0.85),
-      new THREE.Vector3(0.18, -0.9, 0.65),
-      new THREE.Vector3(0.25, -1.25, 0.35),
-      new THREE.Vector3(0.3, -1.45, 0.1),
+      new THREE.Vector3(-0.35, 0.9, 0.46),
+      new THREE.Vector3(-0.25, 0.6, 0.77),
+      new THREE.Vector3(-0.15, 0.25, 0.94),
+      new THREE.Vector3(-0.05, -0.1, 0.98),
+      new THREE.Vector3(0.08, -0.5, 0.87),
+      new THREE.Vector3(0.18, -0.9, 0.67),
+      new THREE.Vector3(0.25, -1.25, 0.36),
+      new THREE.Vector3(0.3, -1.45, 0.11),
     ]);
   }, []);
 
   const ladDiagCurve = useMemo(() => {
     return new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-0.15, 0.25, 0.92),
-      new THREE.Vector3(-0.45, 0.05, 0.85),
-      new THREE.Vector3(-0.7, -0.2, 0.65),
-      new THREE.Vector3(-0.85, -0.5, 0.4),
+      new THREE.Vector3(-0.15, 0.25, 0.94),
+      new THREE.Vector3(-0.45, 0.05, 0.87),
+      new THREE.Vector3(-0.7, -0.2, 0.67),
+      new THREE.Vector3(-0.85, -0.5, 0.42),
     ]);
   }, []);
 
   // 2. LCX Curve (Left Circumflex)
   const lcxCurve = useMemo(() => {
     return new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-0.35, 0.9, 0.45),
-      new THREE.Vector3(-0.65, 0.8, 0.4),
-      new THREE.Vector3(-0.95, 0.6, 0.15),
-      new THREE.Vector3(-1.1, 0.3, -0.2),
-      new THREE.Vector3(-1.0, 0.0, -0.55),
-      new THREE.Vector3(-0.75, -0.3, -0.75),
-      new THREE.Vector3(-0.45, -0.6, -0.8),
+      new THREE.Vector3(-0.35, 0.9, 0.46),
+      new THREE.Vector3(-0.65, 0.8, 0.42),
+      new THREE.Vector3(-0.95, 0.6, 0.17),
+      new THREE.Vector3(-1.12, 0.3, -0.19),
+      new THREE.Vector3(-1.02, 0.0, -0.56),
+      new THREE.Vector3(-0.76, -0.3, -0.76),
+      new THREE.Vector3(-0.46, -0.6, -0.81),
     ]);
   }, []);
 
   const lcxMarginalCurve = useMemo(() => {
     return new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-0.95, 0.6, 0.15),
-      new THREE.Vector3(-1.05, 0.2, 0.2),
-      new THREE.Vector3(-1.0, -0.25, 0.2),
-      new THREE.Vector3(-0.85, -0.7, 0.1),
+      new THREE.Vector3(-0.95, 0.6, 0.17),
+      new THREE.Vector3(-1.07, 0.2, 0.22),
+      new THREE.Vector3(-1.02, -0.25, 0.22),
+      new THREE.Vector3(-0.87, -0.7, 0.12),
     ]);
   }, []);
 
   // 3. RCA Curve (Right Coronary)
   const rcaCurve = useMemo(() => {
     return new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.35, 0.85, 0.4),
-      new THREE.Vector3(0.65, 0.7, 0.45),
-      new THREE.Vector3(0.95, 0.45, 0.35),
-      new THREE.Vector3(1.1, 0.1, 0.1),
-      new THREE.Vector3(1.05, -0.3, -0.15),
-      new THREE.Vector3(0.85, -0.7, -0.35),
-      new THREE.Vector3(0.55, -1.0, -0.45),
-      new THREE.Vector3(0.2, -1.25, -0.3),
+      new THREE.Vector3(0.35, 0.85, 0.42),
+      new THREE.Vector3(0.65, 0.7, 0.47),
+      new THREE.Vector3(0.96, 0.45, 0.37),
+      new THREE.Vector3(1.12, 0.1, 0.12),
+      new THREE.Vector3(1.07, -0.3, -0.14),
+      new THREE.Vector3(0.86, -0.7, -0.34),
+      new THREE.Vector3(0.56, -1.0, -0.44),
+      new THREE.Vector3(0.21, -1.25, -0.29),
     ]);
   }, []);
 
   const rcaMarginalCurve = useMemo(() => {
     return new THREE.CatmullRomCurve3([
-      new THREE.Vector3(1.1, 0.1, 0.1),
-      new THREE.Vector3(0.9, -0.15, 0.35),
-      new THREE.Vector3(0.65, -0.45, 0.55),
-      new THREE.Vector3(0.45, -0.75, 0.6),
+      new THREE.Vector3(1.12, 0.1, 0.12),
+      new THREE.Vector3(0.92, -0.15, 0.37),
+      new THREE.Vector3(0.66, -0.45, 0.57),
+      new THREE.Vector3(0.46, -0.75, 0.62),
     ]);
   }, []);
 
-  // Geometries: Display & Hit-test area (wider radius for easy clicking)
-  const ladGeo = useMemo(() => new THREE.TubeGeometry(ladCurve, 64, 0.065, 14, false), [ladCurve]);
-  const ladHitGeo = useMemo(() => new THREE.TubeGeometry(ladCurve, 32, 0.16, 8, false), [ladCurve]);
-  const ladDiagGeo = useMemo(() => new THREE.TubeGeometry(ladDiagCurve, 32, 0.04, 10, false), [ladDiagCurve]);
+  // Optimized geometries: max 44 tubular segments, 8-10 radial segments
+  const ladGeo = useMemo(() => new THREE.TubeGeometry(ladCurve, 44, 0.065, 10, false), [ladCurve]);
+  const ladHitGeo = useMemo(() => new THREE.TubeGeometry(ladCurve, 24, 0.16, 8, false), [ladCurve]);
+  const ladDiagGeo = useMemo(() => new THREE.TubeGeometry(ladDiagCurve, 20, 0.04, 8, false), [ladDiagCurve]);
 
-  const lcxGeo = useMemo(() => new THREE.TubeGeometry(lcxCurve, 64, 0.06, 14, false), [lcxCurve]);
-  const lcxHitGeo = useMemo(() => new THREE.TubeGeometry(lcxCurve, 32, 0.16, 8, false), [lcxCurve]);
-  const lcxMarginalGeo = useMemo(() => new THREE.TubeGeometry(lcxMarginalCurve, 32, 0.04, 10, false), [lcxMarginalCurve]);
+  const lcxGeo = useMemo(() => new THREE.TubeGeometry(lcxCurve, 44, 0.06, 10, false), [lcxCurve]);
+  const lcxHitGeo = useMemo(() => new THREE.TubeGeometry(lcxCurve, 24, 0.16, 8, false), [lcxCurve]);
+  const lcxMarginalGeo = useMemo(() => new THREE.TubeGeometry(lcxMarginalCurve, 20, 0.04, 8, false), [lcxMarginalCurve]);
 
-  const rcaGeo = useMemo(() => new THREE.TubeGeometry(rcaCurve, 64, 0.062, 14, false), [rcaCurve]);
-  const rcaHitGeo = useMemo(() => new THREE.TubeGeometry(rcaCurve, 32, 0.16, 8, false), [rcaCurve]);
-  const rcaMarginalGeo = useMemo(() => new THREE.TubeGeometry(rcaMarginalCurve, 32, 0.04, 10, false), [rcaMarginalCurve]);
+  const rcaGeo = useMemo(() => new THREE.TubeGeometry(rcaCurve, 44, 0.062, 10, false), [rcaCurve]);
+  const rcaHitGeo = useMemo(() => new THREE.TubeGeometry(rcaCurve, 24, 0.16, 8, false), [rcaCurve]);
+  const rcaMarginalGeo = useMemo(() => new THREE.TubeGeometry(rcaMarginalCurve, 20, 0.04, 8, false), [rcaMarginalCurve]);
+
+  const hitMat = useMemo(() => new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 }), []);
+
+  // Dispose geometries and materials on unmount
+  useEffect(() => {
+    return () => {
+      ladGeo.dispose();
+      ladHitGeo.dispose();
+      ladDiagGeo.dispose();
+      lcxGeo.dispose();
+      lcxHitGeo.dispose();
+      lcxMarginalGeo.dispose();
+      rcaGeo.dispose();
+      rcaHitGeo.dispose();
+      rcaMarginalGeo.dispose();
+      hitMat.dispose();
+    };
+  }, [
+    ladGeo,
+    ladHitGeo,
+    ladDiagGeo,
+    lcxGeo,
+    lcxHitGeo,
+    lcxMarginalGeo,
+    rcaGeo,
+    rcaHitGeo,
+    rcaMarginalGeo,
+    hitMat,
+  ]);
 
   // Color helper based on selection & hover
   const getVesselVisuals = (id: Vessel) => {
@@ -132,9 +162,7 @@ export const VesselMesh: React.FC = () => {
         }}
       >
         {/* Invisible expanded hit area mesh */}
-        <mesh geometry={ladHitGeo} visible={false}>
-          <meshBasicMaterial transparent opacity={0} />
-        </mesh>
+        <mesh geometry={ladHitGeo} material={hitMat} />
         <mesh geometry={ladGeo}>
           <meshStandardMaterial
             color={ladVisuals.baseColor}
@@ -156,10 +184,11 @@ export const VesselMesh: React.FC = () => {
 
         <VesselLabels
           vessel="LAD"
-          position={[0.0, 0.1, 1.1]}
+          position={[0.0, 0.1, 1.12]}
           isHovered={hoveredVessel === 'LAD'}
           isSelected={selectedVessel === 'LAD'}
           probability={ladScore}
+          onSelect={() => setSelectedVessel('LAD')}
         />
       </group>
 
@@ -180,9 +209,7 @@ export const VesselMesh: React.FC = () => {
         }}
       >
         {/* Invisible expanded hit area mesh */}
-        <mesh geometry={lcxHitGeo} visible={false}>
-          <meshBasicMaterial transparent opacity={0} />
-        </mesh>
+        <mesh geometry={lcxHitGeo} material={hitMat} />
         <mesh geometry={lcxGeo}>
           <meshStandardMaterial
             color={lcxVisuals.baseColor}
@@ -204,10 +231,11 @@ export const VesselMesh: React.FC = () => {
 
         <VesselLabels
           vessel="LCX"
-          position={[-1.15, 0.45, 0.15]}
+          position={[-1.18, 0.45, 0.18]}
           isHovered={hoveredVessel === 'LCX'}
           isSelected={selectedVessel === 'LCX'}
           probability={lcxScore}
+          onSelect={() => setSelectedVessel('LCX')}
         />
       </group>
 
@@ -228,9 +256,7 @@ export const VesselMesh: React.FC = () => {
         }}
       >
         {/* Invisible expanded hit area mesh */}
-        <mesh geometry={rcaHitGeo} visible={false}>
-          <meshBasicMaterial transparent opacity={0} />
-        </mesh>
+        <mesh geometry={rcaHitGeo} material={hitMat} />
         <mesh geometry={rcaGeo}>
           <meshStandardMaterial
             color={rcaVisuals.baseColor}
@@ -252,10 +278,11 @@ export const VesselMesh: React.FC = () => {
 
         <VesselLabels
           vessel="RCA"
-          position={[1.15, 0.35, 0.35]}
+          position={[1.18, 0.35, 0.38]}
           isHovered={hoveredVessel === 'RCA'}
           isSelected={selectedVessel === 'RCA'}
           probability={rcaScore}
+          onSelect={() => setSelectedVessel('RCA')}
         />
       </group>
     </group>

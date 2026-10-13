@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { Volume2, VolumeX, Globe, Sparkles, UserCheck, Stethoscope, AlertCircle, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Volume2, VolumeX, Globe, Sparkles, UserCheck, Stethoscope, AlertTriangle, Loader2 } from 'lucide-react';
 import { GlassCard } from '../common/GlassCard';
-import { Badge } from '../common/Badge';
 import { useAppStore } from '../../state/useAppStore';
 import { callLlm } from '../../api/llm';
 
@@ -24,26 +23,61 @@ export const PatientSummaryPanel: React.FC = () => {
   const [clinicianText, setClinicianText] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isFallback, setIsFallback] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   const currentScore = prediction?.vesselPredictions?.[selectedVessel]?.demoScore ?? 25;
+
+  // Load and listen for available system speech synthesis voices
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const updateVoices = () => {
+      const v = window.speechSynthesis.getVoices();
+      if (v && v.length > 0) {
+        setAvailableVoices(v);
+      }
+    };
+
+    updateVoices();
+    window.speechSynthesis.onvoiceschanged = updateVoices;
+
+    return () => {
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+  }, []);
+
+  const getMatchingVoice = (lang: LangCode): SpeechSynthesisVoice | null => {
+    if (availableVoices.length === 0) return null;
+    const prefix = lang === 'Hindi' ? 'hi' : lang === 'Telugu' ? 'te' : 'en';
+    return (
+      availableVoices.find((v) =>
+        v.lang.toLowerCase().replace('_', '-').startsWith(prefix)
+      ) || null
+    );
+  };
+
+  const matchingVoice = getMatchingVoice(language);
+  const hasVoiceForLanguage = Boolean(matchingVoice);
 
   const getFallbackText = (lang: LangCode, vessel: string, score: number) => {
     switch (lang) {
       case 'Hindi':
         return {
-          patient: `आपके द्वारा दर्ज किए गए नैदानिक परीक्षणों के आधार पर, अनुसंधान मॉडल ने ${vessel} क्षेत्र के लिए ${score}% का प्रदर्शन अनुमान लगाया है। यह केवल एक कंप्यूटर मॉडल स्कोर है और हृदय रोग का निदान नहीं है। कृपया अपने स्वास्थ्य और लक्षणों के बारे में अपने डॉक्टर से परामर्श करें।`,
-          clinician: `Multimodal heuristic scores indicate ${score}% exploratory output for ${vessel} territory. No diagnostic blockage or stenosis is clinically established; physician review is required.`,
+          patient: `आपके द्वारा दर्ज किए गए नैदानिक विवरण के आधार पर, यह शोध मॉडल ${vessel} धमनी के लिए ${score}% का प्रदर्शन अनुमान दिखाता है। यह केवल एक कंप्यूटर मॉडल स्कोर है और किसी हृदय रोग का निदान नहीं है। कृपया अपने स्वास्थ्य और लक्षणों के लिए एक योग्य चिकित्सक से परामर्श करें।`,
+          clinician: `Multimodal heuristic scores indicate ${score}% exploratory output for ${vessel} territory. No diagnostic stenosis is clinically established; physician review is required.`,
         };
       case 'Telugu':
         return {
-          patient: `మీరు నమోదు చేసిన క్లినికల్ పరీక్షల ఆధారంగా, పరిశోధనా నమూనా ${vessel} ప్రాంతానికి ${score}% ప్రదర్శన అంచనాను లెక్కించింది. ఇది కేవలం కంప్యూటర్ మోడల్ స్కోర్ మాత్రమే, గుండె జబ్బు నిర్ధారణ కాదు. దయచేసి మీ ఆరోగ్యం మరియు లక్షణాల గురించి మీ వైద్యుడిని సంప్రదించండి.`,
-          clinician: `Multimodal heuristic scores indicate ${score}% exploratory output for ${vessel} territory. No diagnostic blockage or stenosis is clinically established; physician review is required.`,
+          patient: `మీరు అందించిన క్లినికల్ వివరాల ఆధారంగా, పరిశోధనా కంప్యూటర్ నమూనా ${vessel} ధమని కోసం ${score}% ప్రదర్శన అంచనాను చూపుతోంది. ఇది కేవలం కంప్యూటర్ మోడల్ స్కోర్ మాత్రమే, గుండె జబ్బు నిర్ధారణ కాదు. దయచేసి మీ ఆరోగ్యం మరియు లక్షణాల గురించి అర్హత కలిగిన వైద్యుడిని సంప్రదించండి.`,
+          clinician: `Multimodal heuristic scores indicate ${score}% exploratory output for ${vessel} territory. No diagnostic stenosis is clinically established; physician review is required.`,
         };
       case 'English':
       default:
         return {
-          patient: `Based on your entered clinical measurements and evidence, the research demonstration model calculated a score of ${score}% for the ${vessel} region. This is a computer model output and NOT a diagnosis of coronary artery disease. Please speak with your doctor or healthcare professional about what this means for you.`,
-          clinician: `Multimodal heuristic scores indicate ${score}% exploratory output for ${vessel} territory under current active modalities. No diagnostic blockage or stenosis is clinically established; physician review is required.`,
+          patient: `Based on your entered clinical measurements and evidence, the research demonstration model calculated a score of ${score}% for the ${vessel} territory. This is a computer demonstration output and NOT a diagnosis of coronary artery disease. Please speak with your doctor or healthcare professional about what this means for you.`,
+          clinician: `Multimodal heuristic scores indicate ${score}% exploratory output for ${vessel} territory under current active modalities. No diagnostic stenosis is clinically established; physician review is required.`,
         };
     }
   };
@@ -59,7 +93,7 @@ export const PatientSummaryPanel: React.FC = () => {
     };
 
     try {
-      const response = await callLlm<{ patientExplanation: string; clinicianSummary: string }>(
+      const response = await callLlm<{ patientText: string; clinicianTextEn: string }>(
         'patient_summary',
         {
           language,
@@ -69,9 +103,9 @@ export const PatientSummaryPanel: React.FC = () => {
         }
       );
 
-      if (response && response.patientExplanation) {
-        setPatientText(response.patientExplanation);
-        setClinicianText(response.clinicianSummary || null);
+      if (response && response.patientText) {
+        setPatientText(response.patientText);
+        setClinicianText(response.clinicianTextEn || null);
         setIsFallback(false);
       } else {
         const fb = getFallbackText(language, selectedVessel, currentScore);
@@ -94,9 +128,15 @@ export const PatientSummaryPanel: React.FC = () => {
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(patientText);
-    utterance.lang = LANG_CONFIG[language].speechCode;
-    utterance.rate = 0.95;
 
+    if (matchingVoice) {
+      utterance.voice = matchingVoice;
+      utterance.lang = matchingVoice.lang;
+    } else {
+      utterance.lang = LANG_CONFIG[language].speechCode;
+    }
+
+    utterance.rate = 0.95;
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
 
@@ -175,12 +215,21 @@ export const PatientSummaryPanel: React.FC = () => {
           <button
             type="button"
             onClick={isSpeaking ? stopSpeech : speakText}
-            className={`py-2 px-3 rounded-xl border text-xs font-mono flex items-center gap-1.5 transition-all ${
+            disabled={!hasVoiceForLanguage && !isSpeaking}
+            className={`py-2 px-3 rounded-xl border text-xs font-mono flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
               isSpeaking
                 ? 'bg-rose-500/20 border-rose-500/40 text-rose-300 animate-pulse'
-                : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-200'
+                : hasVoiceForLanguage
+                ? 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-200'
+                : 'bg-white/5 border-white/5 text-slate-500'
             }`}
-            title={isSpeaking ? 'Stop speech' : 'Read aloud in selected language'}
+            title={
+              isSpeaking
+                ? 'Stop speech'
+                : hasVoiceForLanguage
+                ? `Read aloud in ${LANG_CONFIG[language].label}`
+                : 'No voice installed for this language'
+            }
           >
             {isSpeaking ? (
               <>
@@ -189,7 +238,7 @@ export const PatientSummaryPanel: React.FC = () => {
               </>
             ) : (
               <>
-                <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
+                <Volume2 className={`w-3.5 h-3.5 ${hasVoiceForLanguage ? 'text-cyan-400' : 'text-slate-500'}`} />
                 <span>Read aloud</span>
               </>
             )}
@@ -200,6 +249,14 @@ export const PatientSummaryPanel: React.FC = () => {
       {/* Generated Content Box */}
       {patientText && (
         <div className="space-y-3 pt-2 border-t border-white/5 animate-fadeIn">
+          {/* Amber notice if fallback template was used */}
+          {isFallback && (
+            <div className="flex items-center gap-2 p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-mono">
+              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 text-amber-400" />
+              <span>AI translation unavailable - showing a pre-written template</span>
+            </div>
+          )}
+
           {/* Patient Facing Section */}
           <div className="p-3.5 rounded-xl bg-black/50 border border-cyan-500/20 space-y-1.5">
             <div className="flex items-center justify-between text-[10px]">
@@ -207,11 +264,6 @@ export const PatientSummaryPanel: React.FC = () => {
                 <UserCheck className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Patient-Facing Explanation ({language})</span>
               </span>
-              {isFallback && (
-                <span className="text-amber-300 text-[9px] px-1.5 py-0.2 rounded bg-amber-500/10 border border-amber-500/20">
-                  DETERMINISTIC TEMPLATE
-                </span>
-              )}
             </div>
 
             <p className="text-xs text-slate-200 font-sans leading-relaxed">
@@ -233,11 +285,6 @@ export const PatientSummaryPanel: React.FC = () => {
           )}
         </div>
       )}
-
-      {/* Note */}
-      <div className="text-[9px] text-slate-400 font-sans italic pt-1 border-t border-white/5">
-        Research prototype • not medical advice • no prescription or treatment instructions provided.
-      </div>
     </GlassCard>
   );
 };

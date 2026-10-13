@@ -8,6 +8,7 @@ interface VesselLabelsProps {
   isHovered: boolean;
   isSelected: boolean;
   probability: number | null;
+  onSelect: () => void;
 }
 
 export const VesselLabels: React.FC<VesselLabelsProps> = ({
@@ -16,52 +17,44 @@ export const VesselLabels: React.FC<VesselLabelsProps> = ({
   isHovered,
   isSelected,
   probability,
+  onSelect,
 }) => {
-  const fullNames: Record<Vessel, string> = {
-    LAD: 'Left Anterior Descending Artery',
-    LCX: 'Left Circumflex Artery',
-    RCA: 'Right Coronary Artery',
-  };
+  const dotColor =
+    vessel === 'LAD'
+      ? 'bg-cyan-400 shadow-[0_0_8px_rgba(0,229,255,0.9)]'
+      : vessel === 'LCX'
+      ? 'bg-violet-400 shadow-[0_0_8px_rgba(139,92,246,0.9)]'
+      : 'bg-pink-400 shadow-[0_0_8px_rgba(244,63,94,0.9)]';
 
   return (
-    <Html position={position} center distanceFactor={8} zIndexRange={[100, 0]} occlude={false}>
-      <div className="pointer-events-none select-none transition-all duration-200 whitespace-nowrap">
-        {/* Hover Tooltip */}
-        {isHovered && !isSelected && (
-          <div className="mb-2 p-2 rounded-lg bg-black/90 border border-cyan-400 text-left shadow-2xl backdrop-blur-md min-w-[200px] animate-fadeIn">
-            <div className="text-xs font-bold font-mono text-cyan-300">
-              {vessel}
-            </div>
-            <div className="text-[10px] text-slate-200 leading-tight">
-              {fullNames[vessel]}
-            </div>
-            {probability !== null ? (
-              <div className="text-[9px] font-mono text-amber-300 mt-1">
-                Demo score: {probability}/100 (Mock mode)
-              </div>
-            ) : (
-              <div className="text-[9px] font-mono text-slate-400 mt-1">
-                Awaiting demonstration analysis
-              </div>
-            )}
-            <div className="text-[9px] font-mono text-cyan-400 mt-0.5 flex items-center gap-1 font-semibold">
-              <span>Click to inspect territory</span>
-            </div>
+    <Html position={position} center zIndexRange={[10, 0]} occlude={false}>
+      <div
+        className="select-none transition-all duration-150 cursor-pointer pointer-events-auto"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect();
+        }}
+      >
+        {isSelected ? (
+          // Full pill ONLY for selected vessel (fixed on-screen size ~11px, small padding)
+          <div className="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold tracking-wider bg-cyan-500 text-slate-950 border border-cyan-300 shadow-[0_0_12px_rgba(0,229,255,0.7)] flex items-center gap-1 whitespace-nowrap animate-fadeIn">
+            <span>{vessel}</span>
+            <span>•</span>
+            <span>{probability !== null ? `${probability}%` : '--'}</span>
           </div>
+        ) : isHovered ? (
+          // Name on hover/tap only
+          <div className="px-1.5 py-0.5 rounded-md text-[11px] font-mono font-bold tracking-wide bg-slate-900/95 text-white border border-white/40 shadow-lg flex items-center gap-1 whitespace-nowrap animate-fadeIn">
+            <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+            <span>{vessel}</span>
+          </div>
+        ) : (
+          // Small colored dot for unselected vessels
+          <div
+            className={`w-2.5 h-2.5 rounded-full border border-white/40 transition-transform hover:scale-125 ${dotColor}`}
+            title={`Select ${vessel}`}
+          />
         )}
-
-        {/* Persistent Pill Badge */}
-        <div
-          className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold tracking-wider border transition-all ${
-            isSelected
-              ? 'bg-cyan-500 text-black border-cyan-300 scale-110 shadow-[0_0_15px_rgba(0,229,255,0.8)]'
-              : isHovered
-              ? 'bg-white text-black border-white scale-105'
-              : 'bg-black/85 text-cyan-300 border-cyan-500/40 opacity-90'
-          }`}
-        >
-          {probability !== null ? `${vessel} • ${probability}/100 (Demo score)` : `${vessel} • Awaiting model output`}
-        </div>
       </div>
     </Html>
   );

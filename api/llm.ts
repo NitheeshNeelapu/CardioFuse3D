@@ -72,25 +72,27 @@ Rules:
     parts = [{ text: promptText }];
   } else if (task === 'patient_summary') {
     isJsonTask = true;
+    const targetLang = payload.language || 'English';
     promptText = `You are a clear, compassionate medical research communicator.
-A research prototype evaluated cardiovascular evidence with the following model-derived estimates:
-Selected vessel: ${payload.selectedVessel}
+A research prototype evaluated cardiovascular evidence with the following model-derived demonstration estimates:
+Target Vessel: ${payload.selectedVessel}
 Demonstration scores: ${JSON.stringify(payload.probabilities)}
 Active modalities: ${JSON.stringify(payload.activeModalities)}
 ${payload.agentAdvice ? `Agent note: ${payload.agentAdvice}` : ''}
-Requested patient explanation language: ${payload.language || 'English'}
+Target Language: ${targetLang}
 
 Instructions:
-1. Write an explanation directly to the patient in the requested language (${payload.language || 'English'}), at approximately a grade-6 reading level.
-2. Explicitly explain that this is a research demonstration estimate and NOT a medical diagnosis.
-3. Do NOT provide any prescription, medication, or medical treatment advice.
-4. Urge the patient to discuss their health and symptoms with a qualified doctor.
-5. Maximum ~120 words for the patient section.
-6. Also write a 2-3 sentence English clinician summary of the findings and missing evidence gaps.
+1. Write an explanation directly to the patient strictly and ONLY in the target language (${targetLang}). Do NOT write the patient explanation in English unless the target language is English.
+2. The explanation must be simple (approx grade-6 reading level) and state clearly that this is an experimental computer demonstration score and NOT a medical diagnosis of coronary disease.
+3. NEVER provide prescriptions, medications, or medical treatment advice.
+4. Urge the patient to speak with a qualified physician about their health.
+5. Maximum ~120 words for the patient explanation in ${targetLang}.
+6. Write a 2-3 sentence clinician summary in English.
+
 Return STRICT JSON with exactly these two keys:
 {
-  "patientExplanation": "<text in ${payload.language || 'English'}>",
-  "clinicianSummary": "<2-3 sentence English summary>"
+  "patientText": "<explanation written exclusively in ${targetLang}>",
+  "clinicianTextEn": "<2-3 sentence English clinician summary>"
 }`;
     parts = [{ text: promptText }];
   } else if (task === 'translate_narrative') {

@@ -10,7 +10,6 @@ import { EvidencePanel } from '../components/Dashboard/EvidencePanel';
 import { ExplainabilityPanel } from '../components/Dashboard/ExplainabilityPanel';
 import { AgentPanel } from '../components/Dashboard/AgentPanel';
 import { PatientSummaryPanel } from '../components/Dashboard/PatientSummaryPanel';
-import { GlassCard } from '../components/common/GlassCard';
 
 export const Dashboard: React.FC = () => {
   const analysisStatus = useAppStore((s) => s.analysisStatus);
@@ -20,33 +19,20 @@ export const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="w-full max-w-[1920px] mx-auto px-3 sm:px-4 lg:px-6 py-4 flex-1 flex flex-col animate-fadeIn">
+    <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-4 lg:px-6 py-3 sm:py-4 flex-1 flex flex-col animate-fadeIn overflow-x-hidden">
       {/* 3-Column Widescreen Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start flex-1">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start flex-1 w-full">
         
-        {/* ================= LEFT COLUMN (3 cols on xl / 25% width) ================= */}
-        {/* Patient Profile, Vitals, What-If Exploration, ECG Waveform */}
-        <div className="xl:col-span-3 space-y-4 order-2 xl:order-1">
-          <PatientCard />
-          <WhatIfPanel />
-        </div>
-
-        {/* ================= CENTER COLUMN (5 cols on xl / Primary Visual Focus) ================= */}
-        {/* Large 3D Heart Visualization & Controls */}
-        <div className="xl:col-span-5 order-1 xl:order-2 sticky top-[72px] z-10 xl:z-auto">
-          <GlassCard
-            borderVariant="cyan"
-            glow={true}
-            padding="sm"
-            className="flex flex-col min-h-[560px] lg:min-h-[660px] xl:min-h-[720px] p-3 sm:p-4"
-          >
+        {/* ================= 1. HEART VIEWER (Center on Desktop / #1 on Mobile) ================= */}
+        {/* Sticky only on xl and up; scrolls naturally on mobile */}
+        <div className="xl:col-span-5 order-1 xl:order-2 xl:sticky xl:top-[72px] xl:z-auto w-full">
+          <div className="flex flex-col p-2.5 sm:p-4 rounded-2xl border border-cyan-500/30 bg-[#08111F] text-slate-100 shadow-[0_0_25px_rgba(0,229,255,0.08)] w-full">
             <HeartScene />
-          </GlassCard>
+          </div>
         </div>
 
-        {/* ================= RIGHT COLUMN (4 cols on xl / 33% width) ================= */}
-        {/* Risk Panel, Modality Controls, Vessel-Specific Evidence, Explainability & AI Insight */}
-        <div className="xl:col-span-4 space-y-4 order-3">
+        {/* ================= 2. RISK, MODALITIES, EVIDENCE, EXPLAINABILITY, AGENT, SUMMARY (Right on Desktop / #2 on Mobile) ================= */}
+        <div className="xl:col-span-4 space-y-4 order-2 xl:order-3 w-full">
           {/* Risk Panel & Modality Contribution Preview */}
           <RiskPanel />
 
@@ -64,6 +50,12 @@ export const Dashboard: React.FC = () => {
 
           {/* Multilingual Patient Explanation & Read Aloud */}
           <PatientSummaryPanel />
+        </div>
+
+        {/* ================= 3. PATIENT PROFILE, VITALS, WHAT-IF (Left on Desktop / #3 on Mobile) ================= */}
+        <div className="xl:col-span-3 space-y-4 order-3 xl:order-1 w-full">
+          <PatientCard />
+          <WhatIfPanel />
         </div>
 
       </div>
