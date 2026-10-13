@@ -6,7 +6,7 @@ import { GoogleGenAI } from "@google/genai";
 dotenv.config();
 
 const app = express();
-const port = Number(process.env.PORT) || 3001;
+const PORT = process.env.PORT || 3001;
 
 app.use(
   cors({
@@ -165,6 +165,6 @@ ${JSON.stringify(input, null, 2)}`,
   }
 });
 
-app.listen(port, () => {
-  console.log(`CARDIOFUSE API running at http://localhost:${port}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
 });

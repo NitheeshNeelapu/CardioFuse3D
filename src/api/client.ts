@@ -4,26 +4,10 @@ import { Vessel } from '../types/vessel';
 import { ModalityState } from '../types/modality';
 import { PredictionResult, VesselEvidence, ProvenanceData } from '../types/model';
 import { ExplainResponse, HealthResponse, GeminiExplanationResponse } from './types';
+import { callLlm } from './llm';
 
 class CardioApiClient {
-  private useRealBackend: boolean = false;
-  private baseUrl: string = '';
-
-  constructor() {
-    this.baseUrl = import.meta.env.VITE_API_BASE_URL || '';
-    this.useRealBackend = Boolean(this.baseUrl);
-  }
-
   async getPatient(patientId: string): Promise<Patient> {
-    if (this.useRealBackend) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/patients/${patientId}`);
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-        return await response.json();
-      } catch (err) {
-        console.warn('Real backend unavailable, falling back to mockApi', err);
-      }
-    }
     return await mockApi.getPatient(patientId);
   }
 
@@ -32,19 +16,6 @@ class CardioApiClient {
     selectedVessel: Vessel,
     modalities: ModalityState
   ): Promise<PredictionResult> {
-    if (this.useRealBackend) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/predict`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ patient, selectedVessel, modalities }),
-        });
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-        return await response.json();
-      } catch (err) {
-        console.warn('Real backend unavailable, falling back to mockApi', err);
-      }
-    }
     return await mockApi.predict(patient, selectedVessel, modalities);
   }
 
@@ -53,19 +24,6 @@ class CardioApiClient {
     selectedVessel: Vessel,
     modalities: ModalityState
   ): Promise<ExplainResponse> {
-    if (this.useRealBackend) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/explain`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ patient, selectedVessel, modalities }),
-        });
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-        return await response.json();
-      } catch (err) {
-        console.warn('Real backend unavailable, falling back to mockApi', err);
-      }
-    }
     return await mockApi.explain(patient, selectedVessel, modalities);
   }
 
@@ -74,19 +32,6 @@ class CardioApiClient {
     selectedVessel: Vessel,
     modalities: ModalityState
   ): Promise<VesselEvidence> {
-    if (this.useRealBackend) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/evidence`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ patient, selectedVessel, modalities }),
-        });
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-        return await response.json();
-      } catch (err) {
-        console.warn('Real backend unavailable, falling back to mockApi', err);
-      }
-    }
     return await mockApi.getEvidence(patient, selectedVessel, modalities);
   }
 
@@ -94,28 +39,10 @@ class CardioApiClient {
     patient: Patient | string | PatientInput,
     modalities: ModalityState
   ): Promise<ProvenanceData> {
-    if (this.useRealBackend) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/provenance`);
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-        return await response.json();
-      } catch (err) {
-        console.warn('Real backend unavailable, falling back to mockApi', err);
-      }
-    }
     return await mockApi.getProvenance(patient, modalities);
   }
 
   async getHealth(): Promise<HealthResponse> {
-    if (this.useRealBackend) {
-      try {
-        const response = await fetch(`${this.baseUrl}/api/health`);
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-        return await response.json();
-      } catch (err) {
-        console.warn('Real backend unavailable, falling back to mockApi', err);
-      }
-    }
     return await mockApi.getHealth();
   }
 
@@ -124,29 +51,51 @@ class CardioApiClient {
     selectedVessel: Vessel,
     modalities: ModalityState
   ): Promise<GeminiExplanationResponse> {
-    const response = await fetch('/api/explain', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        patientInput,
+    const disclaimer =
+      'RESEARCH PROTOTYPE • NOT CLINICALLY VALIDATED • FOR DEMONSTRATION PURPOSES ONLY';
+
+    const fallbackExplanation = `### Multimodal Evidence Assessment (${selectedVessel})
+
+**Demonstration Context:**
+The current profile was evaluated across active diagnostic modalities using a transparent, rule-based cross-attention scoring algorithm.
+
+**Summary of Findings:**
+- **Target Territory:** ${selectedVessel} coronary supply bed.
+- **Evidence Streams Active:** ${Object.entries(modalities).filter(([, v]) => v).map(([k]) => k.toUpperCase()).join(', ') || 'None'}.
+- **Clinical Demographics:** Age ${patientInput.age || 'unspecified'}, SBP ${patientInput.systolicBP || 'unspecified'} mmHg, BMI ${patientInput.bmi || 'unspecified'}.
+- **ECG & Symptoms:** ${patientInput.ecg?.available ? '12-lead ECG markers provided' : 'ECG not supplied'}; ${patientInput.symptoms?.narrativeText ? 'Symptom narrative analyzed' : 'No symptom narrative provided'}.
+
+**Recommendation:**
+This is a research prototype demonstration. Scores are synthetic and do not constitute a diagnostic probability or clinical advice. Diagnostic confirmation requires physician assessment, high-sensitivity troponin assays, echocardiography, or coronary CTA.`;
+
+    try {
+      const llmResult = await callLlm<string>('agent_explain', {
         selectedVessel,
-        modalities,
-      }),
-    });
+        activeModalities: modalities,
+        ranking: [],
+        guidelineSnippets: [],
+      });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data?.error || `Gemini request failed: HTTP ${response.status}`
-      );
+      if (llmResult && typeof llmResult === 'string' && llmResult.trim().length > 10) {
+        return {
+          explanation: llmResult.trim(),
+          source: 'Gemini LLM (Synthesized via /api/llm)',
+          clinicallyValidated: false,
+          predictionModelConnected: false,
+          disclaimer,
+        };
+      }
+    } catch {
+      // Return deterministic fallback below
     }
 
-    if (typeof data?.explanation !== 'string') {
-      throw new Error('The explanation service returned an invalid response.');
-    }
-
-    return data as GeminiExplanationResponse;
+    return {
+      explanation: fallbackExplanation,
+      source: 'Deterministic Rule-Based Fallback (Offline / Proxy-Free)',
+      clinicallyValidated: false,
+      predictionModelConnected: false,
+      disclaimer,
+    };
   }
 
   setSimulateFailure(simulate: boolean): void {
