@@ -4,7 +4,7 @@ import { Modality, ModalityState } from '../types/modality';
 import { Patient, PatientInput, ECGMetrics } from '../types/patient';
 import { PredictionResult, VesselEvidence } from '../types/model';
 import { apiClient } from '../api/client';
-import { PIPELINE_STAGES } from '../components/AnalysisPipeline/PipelineProgressModal';
+import { PIPELINE_STAGES } from '../data/pipelineStages';
 import { GeminiExplanationResponse } from '../api/types';
 import { demoPatient01, DEMO_PATIENTS } from '../data/demoPatient';
 import { computeDemoPrediction, getDemoVesselEvidence } from '../data/demoPredictions';
