@@ -1,4 +1,4 @@
-import React, { useState, Component, ErrorInfo } from 'react';
+import React, { useState, useRef, useEffect, Component, ErrorInfo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { HeartMesh } from './HeartMesh';
 import { CameraControls } from './CameraControls';
@@ -61,8 +61,20 @@ export const HeartScene: React.FC = () => {
   // WebGL context lost & recovery state
   const [webglContextLost, setWebglContextLost] = useState<boolean>(false);
   const [canvasKey, setCanvasKey] = useState<number>(0);
+  const userSwitchingRef = useRef<boolean>(false);
+  const domElementRef = useRef<HTMLCanvasElement | null>(null);
+  const listenerRef = useRef<((event: Event) => void) | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (domElementRef.current && listenerRef.current) {
+        domElementRef.current.removeEventListener('webglcontextlost', listenerRef.current);
+      }
+    };
+  }, [canvasKey, viewMode]);
 
   const handleRetry3D = () => {
+    userSwitchingRef.current = false;
     setWebglContextLost(false);
     setCanvasKey((prev) => prev + 1);
     setViewMode('3d');
@@ -104,7 +116,9 @@ export const HeartScene: React.FC = () => {
             <button
               type="button"
               onClick={() => {
+                userSwitchingRef.current = false;
                 setWebglContextLost(false);
+                setCanvasKey((prev) => prev + 1);
                 setViewMode('3d');
               }}
               className={`px-2.5 py-1 rounded-md transition-all font-bold ${
@@ -117,7 +131,14 @@ export const HeartScene: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => setViewMode('schematic')}
+              onClick={() => {
+                userSwitchingRef.current = true;
+                if (domElementRef.current && listenerRef.current) {
+                  domElementRef.current.removeEventListener('webglcontextlost', listenerRef.current);
+                }
+                setWebglContextLost(false);
+                setViewMode('schematic');
+              }}
               className={`px-2.5 py-1 rounded-md transition-all font-bold ${
                 viewMode === 'schematic'
                   ? 'bg-cyan-500 text-slate-950 shadow-[0_0_10px_rgba(0,229,255,0.4)]'
@@ -149,7 +170,7 @@ export const HeartScene: React.FC = () => {
       )}
 
       {/* Main Viewport Container with explicit height */}
-      <div className="w-full h-[360px] sm:h-[440px] lg:h-[520px] xl:h-[600px] relative rounded-xl my-2 overflow-hidden bg-[#030712]">
+      <div className="w-full h-[360px] sm:h-[440px] xl:h-[560px] relative rounded-xl my-2 overflow-hidden bg-[#030712]">
         {/* Subtle radial background glow */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(0,229,255,0.06)_0%,_transparent_70%)] pointer-events-none" />
 
@@ -168,11 +189,16 @@ export const HeartScene: React.FC = () => {
                 style={{ width: '100%', height: '100%' }}
                 onCreated={({ gl }) => {
                   const dom = gl.domElement;
+                  domElementRef.current = dom;
                   const handleContextLost = (event: Event) => {
+                    if (userSwitchingRef.current || viewMode !== '3d') {
+                      return;
+                    }
                     event.preventDefault();
                     setWebglContextLost(true);
                     setViewMode('schematic');
                   };
+                  listenerRef.current = handleContextLost;
                   dom.addEventListener('webglcontextlost', handleContextLost, false);
                 }}
               >

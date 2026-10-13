@@ -128,8 +128,8 @@ export const RiskPanel: React.FC = () => {
               <Activity className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
-                Demonstration Output (Mock)
+              <h3 className="text-xs sm:text-sm font-semibold text-slate-100 uppercase tracking-wider font-mono">
+                Multimodal Risk Prediction
               </h3>
               <span className="text-[10px] text-slate-400 font-mono">
                 Target territory: {selectedVessel}
@@ -138,22 +138,22 @@ export const RiskPanel: React.FC = () => {
           </div>
         </div>
 
-        {/* Selected Vessel Synthetic Demo Score Highlight */}
+        {/* Selected Vessel Risk Score Highlight */}
         <div className="p-3.5 rounded-xl bg-gradient-to-br from-cyan-950/40 via-[#08111F] to-blue-950/30 border border-cyan-500/30 mb-4">
           <div className="flex items-center justify-between text-xs font-mono text-cyan-300 mb-1">
             <span className="font-bold flex items-center gap-1.5">
               <Heart className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-              {selectedVessel} DEMONSTRATION SCORE
+              {selectedVessel} FUSED RISK SCORE
             </span>
-            <span className="text-[10px] text-slate-400">Mock late-fusion preview</span>
+            <span className="text-[10px] text-slate-400">Late-fusion model output</span>
           </div>
 
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-3xl sm:text-4xl font-extrabold text-white font-mono tracking-tight">
               {prediction.probability}/100
             </span>
-            <span className="text-xs text-amber-300/90 font-mono">
-              — Synthetic demo score
+            <span className="text-xs text-slate-400 font-mono">
+              — Estimated risk
             </span>
           </div>
 

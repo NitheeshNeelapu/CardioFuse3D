@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Vessel } from '../../types/vessel';
 import { useAppStore } from '../../state/useAppStore';
+import { GlassCard } from '../common/GlassCard';
 
 export interface AHASegment {
   id: number;
@@ -96,38 +97,38 @@ export const Bullseye: React.FC = () => {
   const activeSegment = hoveredSegment ?? SEGMENTS.find((s) => s.vessel === selectedVessel) ?? SEGMENTS[0];
 
   return (
-    <div className="space-y-3 font-mono">
-      <div className="flex items-center justify-between pb-2 border-b border-white/10">
+    <GlassCard borderVariant="subtle" padding="md" className="space-y-3 font-mono">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-white/10 gap-2">
         <div>
-          <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+          <h3 className="text-xs sm:text-sm font-semibold text-slate-100 uppercase tracking-wider font-mono">
             AHA 17-Segment Polar Bullseye
-          </h4>
-          <span className="text-[10px] text-slate-400">
+          </h3>
+          <span className="text-[10px] text-slate-400 font-mono">
             Left Ventricular Myocardial Segments
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-[9px]">
+        <div className="flex items-center gap-2 text-[9px] font-mono">
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" />
-            <span className="text-cyan-300">LAD</span>
+            <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block shadow-[0_0_6px_#00E5FF]" />
+            <span className="text-cyan-300 font-bold">LAD</span>
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-violet-400 inline-block" />
-            <span className="text-violet-300">LCX</span>
+            <span className="w-2 h-2 rounded-full bg-violet-400 inline-block shadow-[0_0_6px_#A78BFA]" />
+            <span className="text-violet-300 font-bold">LCX</span>
           </span>
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-pink-400 inline-block" />
-            <span className="text-pink-300">RCA</span>
+            <span className="w-2 h-2 rounded-full bg-pink-400 inline-block shadow-[0_0_6px_#EC4899]" />
+            <span className="text-pink-300 font-bold">RCA</span>
           </span>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-        {/* SVG Bullseye */}
-        <div className="relative w-[210px] h-[210px] flex-shrink-0">
+      <div className="flex flex-col items-center justify-center gap-3">
+        {/* SVG Bullseye centered max 280px */}
+        <div className="relative w-full max-w-[280px] aspect-square flex-shrink-0 flex items-center justify-center mx-auto">
           <svg
             viewBox="0 0 260 260"
-            className="w-full h-full select-none"
+            className="w-full h-full max-w-[260px] max-h-[260px] select-none"
             aria-label="AHA 17-Segment Diagram"
           >
             {/* Guide circle */}
@@ -256,7 +257,7 @@ export const Bullseye: React.FC = () => {
           <button
             type="button"
             onClick={() => setSelectedVessel(activeSegment.vessel)}
-            className="w-full mt-1 py-1 rounded bg-white/5 hover:bg-white/10 text-[10px] text-cyan-300 border border-cyan-500/20 text-center transition-all"
+            className="w-full mt-1.5 min-h-[44px] py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-xs font-semibold text-cyan-300 border border-cyan-500/20 text-center transition-all flex items-center justify-center cursor-pointer"
           >
             Focus {activeSegment.vessel} Vessel
           </button>
@@ -266,6 +267,6 @@ export const Bullseye: React.FC = () => {
       <div className="text-[10px] text-slate-400 text-center italic">
         Click any segment to synchronize the 3D heart and peripheral panels with its coronary supply bed.
       </div>
-    </div>
+    </GlassCard>
   );
 };

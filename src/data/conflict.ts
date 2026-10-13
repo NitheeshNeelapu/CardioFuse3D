@@ -35,7 +35,7 @@ export function detectConflict(
   if (activeModalities.length < 2) {
     return {
       status: 'insufficient',
-      message: 'Need 2+ active modalities',
+      message: 'Need at least 2 active modalities',
       perModality: [],
     };
   }

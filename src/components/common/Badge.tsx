@@ -10,7 +10,8 @@ export type BadgeVariant =
   | 'cyan'
   | 'violet'
   | 'amber'
-  | 'emerald';
+  | 'emerald'
+  | 'slate';
 
 export interface BadgeProps {
   children?: React.ReactNode;
@@ -48,6 +49,8 @@ export const Badge: React.FC<BadgeProps> = ({
       'bg-amber-500/15 text-amber-300 border-amber-500/30 font-mono text-[10px] uppercase font-bold tracking-wider',
     emerald:
       'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 font-mono text-[10px] uppercase font-bold tracking-wider',
+    slate:
+      'bg-slate-500/15 text-slate-300 border-slate-500/30 font-mono text-[10px] uppercase font-bold tracking-wider',
   };
 
   return (

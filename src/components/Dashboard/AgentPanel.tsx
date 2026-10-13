@@ -32,7 +32,7 @@ export const AgentPanel: React.FC = () => {
       <div className="flex items-center justify-between pb-2 border-b border-white/10">
         <div className="flex items-center gap-2">
           <Bot className="w-4 h-4 text-violet-400" />
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+          <h3 className="text-xs sm:text-sm font-semibold text-slate-100 uppercase tracking-wider font-mono">
             Missing-Evidence Agent
           </h3>
         </div>
@@ -51,7 +51,7 @@ export const AgentPanel: React.FC = () => {
         type="button"
         onClick={handleRunAgent}
         disabled={isLoading}
-        className="w-full py-2 px-3 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 text-violet-200 border border-violet-500/30 font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 group"
+        className="w-full min-h-[44px] py-2 px-3 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 text-violet-200 border border-violet-500/30 font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 group cursor-pointer"
       >
         {isLoading ? (
           <>

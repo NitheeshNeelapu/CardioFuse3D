@@ -16,7 +16,7 @@ export const ModalityPanel: React.FC = () => {
       <div className="flex items-center justify-between pb-2.5 border-b border-white/10 mb-3">
         <div className="flex items-center gap-2">
           <Sliders className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+          <h3 className="text-xs sm:text-sm font-semibold text-slate-100 uppercase tracking-wider font-mono">
             Modality Controls
           </h3>
         </div>
@@ -30,9 +30,9 @@ export const ModalityPanel: React.FC = () => {
       </p>
 
       {/* Toggles */}
-      <div className="space-y-2.5 bg-black/30 p-2.5 rounded-xl border border-white/5">
+      <div className="space-y-2 bg-black/30 p-2.5 rounded-xl border border-white/5">
         {/* Clinical Toggle */}
-        <div className="flex items-center justify-between py-1 border-b border-white/5">
+        <div className="flex items-center justify-between min-h-[44px] py-1.5 border-b border-white/5">
           <div className="flex items-center gap-2">
             <Database className="w-3.5 h-3.5 text-cyan-400" />
             <div>
@@ -53,7 +53,7 @@ export const ModalityPanel: React.FC = () => {
         </div>
 
         {/* ECG Toggle */}
-        <div className="flex items-center justify-between py-1 border-b border-white/5">
+        <div className="flex items-center justify-between min-h-[44px] py-1.5 border-b border-white/5">
           <div className="flex items-center gap-2">
             <Activity className="w-3.5 h-3.5 text-violet-400" />
             <div>
@@ -74,7 +74,7 @@ export const ModalityPanel: React.FC = () => {
         </div>
 
         {/* Symptom Narrative Toggle */}
-        <div className="flex items-center justify-between py-1">
+        <div className="flex items-center justify-between min-h-[44px] py-1.5">
           <div className="flex items-center gap-2">
             <FileText className="w-3.5 h-3.5 text-pink-400" />
             <div>

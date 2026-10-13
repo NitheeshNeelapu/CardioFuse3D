@@ -53,6 +53,18 @@ export const Header: React.FC = () => {
     }
   };
 
+  const scrollToSection = (id: string) => {
+    if (activeTab !== 'dashboard') {
+      setActiveTab('dashboard');
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    }
+    setMobileMenuOpen(false);
+  };
+
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: null },
     { id: 'architecture', label: 'Architecture', icon: <Layers className="w-3.5 h-3.5" /> },
@@ -103,6 +115,31 @@ export const Header: React.FC = () => {
                 <span>{item.label}</span>
               </button>
             ))}
+
+            {/* Direct Section Anchor Links */}
+            <div className="hidden xl:flex items-center gap-1 pl-2 ml-1 border-l border-white/10 text-[11px]">
+              <button
+                type="button"
+                onClick={() => scrollToSection('anatomy')}
+                className="px-2 py-1 rounded hover:text-cyan-300 hover:bg-white/5 transition-all text-slate-400 cursor-pointer"
+              >
+                01 Anatomy
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSection('evidence')}
+                className="px-2 py-1 rounded hover:text-cyan-300 hover:bg-white/5 transition-all text-slate-400 cursor-pointer"
+              >
+                02 Evidence
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollToSection('explain')}
+                className="px-2 py-1 rounded hover:text-cyan-300 hover:bg-white/5 transition-all text-slate-400 cursor-pointer"
+              >
+                03 Explain
+              </button>
+            </div>
           </nav>
         </div>
 
@@ -206,6 +243,29 @@ export const Header: React.FC = () => {
               <span>{item.label}</span>
             </button>
           ))}
+          <div className="col-span-2 pt-2 border-t border-white/10 flex items-center justify-between gap-1 text-[11px] text-slate-400">
+            <button
+              type="button"
+              onClick={() => scrollToSection('anatomy')}
+              className="flex-1 py-1.5 rounded-lg bg-white/5 hover:text-cyan-300 text-center"
+            >
+              01 Anatomy
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToSection('evidence')}
+              className="flex-1 py-1.5 rounded-lg bg-white/5 hover:text-cyan-300 text-center"
+            >
+              02 Evidence
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToSection('explain')}
+              className="flex-1 py-1.5 rounded-lg bg-white/5 hover:text-cyan-300 text-center"
+            >
+              03 Explain
+            </button>
+          </div>
         </nav>
       )}
     </header>

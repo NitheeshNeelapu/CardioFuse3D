@@ -156,16 +156,16 @@ export const PatientSummaryPanel: React.FC = () => {
   return (
     <GlassCard borderVariant="subtle" padding="md" className="space-y-3 select-none font-mono">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-white/10">
+      <div className="space-y-2 pb-2.5 border-b border-white/10">
         <div className="flex items-center gap-2">
-          <Globe className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+          <Globe className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+          <h3 className="text-xs sm:text-sm font-semibold text-slate-100 uppercase tracking-wider font-mono">
             Patient Explanation & Multilingual Voice
           </h3>
         </div>
 
-        {/* Language Select */}
-        <div className="flex items-center gap-1.5 text-xs">
+        {/* Language Select on a separate row */}
+        <div className="flex flex-wrap items-center gap-1.5 text-xs pt-0.5">
           {(Object.keys(LANG_CONFIG) as LangCode[]).map((l) => (
             <button
               key={l}
@@ -174,7 +174,7 @@ export const PatientSummaryPanel: React.FC = () => {
                 setLanguage(l);
                 stopSpeech();
               }}
-              className={`px-2 py-0.5 rounded text-[10px] transition-all border ${
+              className={`px-2.5 py-1 min-h-[36px] sm:min-h-0 rounded text-[10px] transition-all border ${
                 language === l
                   ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 font-bold'
                   : 'bg-black/30 text-slate-400 border-white/5 hover:text-white'
@@ -196,7 +196,7 @@ export const PatientSummaryPanel: React.FC = () => {
           type="button"
           onClick={handleGenerateSummary}
           disabled={isLoading}
-          className="flex-1 py-2 px-3 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-200 border border-cyan-500/30 font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 group"
+          className="flex-1 min-h-[44px] py-2 px-3 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-200 border border-cyan-500/30 font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 group cursor-pointer"
         >
           {isLoading ? (
             <>
@@ -216,7 +216,7 @@ export const PatientSummaryPanel: React.FC = () => {
             type="button"
             onClick={isSpeaking ? stopSpeech : speakText}
             disabled={!hasVoiceForLanguage && !isSpeaking}
-            className={`py-2 px-3 rounded-xl border text-xs font-mono flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+            className={`min-h-[44px] py-2 px-3 rounded-xl border text-xs font-mono flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${
               isSpeaking
                 ? 'bg-rose-500/20 border-rose-500/40 text-rose-300 animate-pulse'
                 : hasVoiceForLanguage

@@ -7,7 +7,7 @@ export const Footer: React.FC = () => {
   const setActiveTab = useAppStore((s) => s.setActiveTab);
 
   return (
-    <footer className="w-full border-t border-white/10 bg-[#030712] text-slate-400 py-3 px-3 sm:px-4 lg:px-6 text-xs static md:sticky md:bottom-0 z-30">
+    <footer className="w-full border-t border-white/10 bg-[#030712] text-slate-400 pt-3 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.75rem))] px-3 sm:px-4 lg:px-6 text-xs static md:sticky md:bottom-0 z-30">
       <div className="max-w-[1920px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
         {/* Left: Branding & Research Label */}
         <div className="flex items-center gap-2 font-mono text-[11px] flex-wrap justify-center sm:justify-start">

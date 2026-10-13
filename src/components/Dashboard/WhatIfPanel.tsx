@@ -100,7 +100,7 @@ export const WhatIfPanel: React.FC = () => {
       <div className="flex items-center justify-between pb-2 border-b border-white/10">
         <div className="flex items-center gap-2">
           <Sliders className="w-4 h-4 text-cyan-400" />
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+          <h3 className="text-xs sm:text-sm font-semibold text-slate-100 uppercase tracking-wider font-mono">
             What-If Scenario Exploration
           </h3>
         </div>

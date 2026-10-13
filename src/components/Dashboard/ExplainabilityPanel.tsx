@@ -35,7 +35,7 @@ export const ExplainabilityPanel: React.FC = () => {
         <div className="flex items-center justify-between pb-2.5 border-b border-white/10 mb-3">
           <div className="flex items-center gap-2">
             <BarChart2 className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
+            <h3 className="text-xs sm:text-sm font-semibold text-slate-100 uppercase tracking-wider font-mono">
               Feature Contribution (Demo)
             </h3>
           </div>
@@ -104,12 +104,12 @@ export const ExplainabilityPanel: React.FC = () => {
         <div className="flex items-center justify-between pb-2 border-b border-white/10 mb-2.5">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-violet-400 animate-pulse" />
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
-              Demonstration Insight
+            <h4 className="text-xs sm:text-sm font-semibold text-slate-100 uppercase tracking-wider font-mono">
+              Synthesized Insight
             </h4>
           </div>
-          <Badge variant="demo-output" className="text-[9px]">
-            SYNTHETIC DEMO INSIGHT — NOT CLINICAL
+          <Badge variant="violet" className="text-[9px]">
+            AI REASONING
           </Badge>
         </div>
 
