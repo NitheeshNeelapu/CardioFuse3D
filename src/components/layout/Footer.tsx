@@ -11,11 +11,11 @@ export const Footer: React.FC = () => {
       <div className="max-w-[1920px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
         {/* Left: Branding & Research Label */}
         <div className="flex items-center gap-2 font-mono text-[11px]">
-          <span className="font-bold text-white tracking-wide">CARDIOAI</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-cyan-300 border border-white/10">
+          <span className="font-bold text-white tracking-wide">CardioFuse 3D</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 border border-white/10">
             PROTOTYPE v0.2
           </span>
-          <span className="text-slate-500 hidden md:inline">• Evidence-to-Anatomy Engine</span>
+          <span className="text-slate-500 hidden md:inline">• Evidence-to-Anatomy Engine (Demo)</span>
         </div>
 
         {/* Center: Persistent Mandatory Safety Message */}

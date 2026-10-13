@@ -13,10 +13,10 @@ export const About: React.FC = () => {
           RESEARCH PROTOTYPE MISSION
         </div>
         <h1 className="text-3xl font-extrabold text-white tracking-tight font-mono">
-          About CARDIOAI
+          About CARDIOFUSE 3D
         </h1>
         <p className="text-base text-cyan-200/90 font-medium mt-2">
-          “Evidence-to-Anatomy Cardiac Intelligence” — Connecting multimodal evidence to specific coronary supply beds.
+          A weighted multimodal scorer (clinical + ECG + text + ECG photo) with a tool-using LLM agent for explanation, translation and extraction. The LLM never computes risk.
         </p>
       </div>
 
@@ -40,18 +40,18 @@ export const About: React.FC = () => {
           </div>
           <h3 className="text-base font-bold text-white tracking-wide font-mono">Our Approach</h3>
           <p className="text-xs text-slate-300 leading-relaxed">
-            CardioAI introduces an anatomical grounding framework that maps multimodal late-fusion embeddings directly onto an interactive 3D coronary mesh. Every model output is synchronized with its anatomical supply bed (LAD, LCX, RCA).
+            CARDIOFUSE 3D introduces an anatomical grounding framework that maps multimodal evidence directly onto an interactive 3D coronary mesh. Every model output is synchronized with its anatomical supply bed (LAD, LCX, RCA).
           </p>
         </GlassCard>
 
-        {/* 3. Multimodal Fusion */}
+        {/* 3. Multimodal Scorer & Agent */}
         <GlassCard borderVariant="subtle" padding="lg" className="space-y-3">
           <div className="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center">
             <Layers className="w-5 h-5" />
           </div>
-          <h3 className="text-base font-bold text-white tracking-wide font-mono">Multimodal Fusion</h3>
+          <h3 className="text-base font-bold text-white tracking-wide font-mono">Weighted Scorer & Agent</h3>
           <p className="text-xs text-slate-300 leading-relaxed">
-            Our pipeline combines tabular clinical measurements, raw continuous physiological waveforms, and unstructured clinical text embeddings. When a modality like ECG is disabled, the network dynamically masks the vector without synthetic hallucination.
+            Our pipeline combines tabular clinical measurements, physiological waveforms, symptom narratives, and paper ECG photo extraction into a transparent, deterministic rule-based scorer. A tool-using LLM agent provides clinical explainability and multilingual communication without ever altering numerical risk probabilities.
           </p>
         </GlassCard>
 
@@ -73,7 +73,7 @@ export const About: React.FC = () => {
           </div>
           <h3 className="text-base font-bold text-white tracking-wide font-mono">Explainability</h3>
           <p className="text-xs text-slate-300 leading-relaxed">
-            Integrated Gradients and attention span attribution expose the exact lab markers, ECG intervals, and narrative symptom phrases driving model scores. We rigorously distinguish model feature correlation from medical causation.
+            Transparent feature attribution and narrative word-level occlusion expose the exact clinical markers, ECG intervals, and symptom phrases influencing scores. We rigorously distinguish correlation from clinical causality. Current demo uses a transparent rule-based scorer.
           </p>
         </GlassCard>
 
@@ -84,7 +84,7 @@ export const About: React.FC = () => {
           </div>
           <h3 className="text-base font-bold text-white tracking-wide font-mono">Responsible AI</h3>
           <p className="text-xs text-slate-300 leading-relaxed">
-            As a research prototype, CardioAI enforces strict safety boundaries: no medical diagnoses are asserted, missing modalities are made transparently visible, and unverified validation statistics are never fabricated.
+            As a research prototype, CARDIOFUSE 3D enforces strict safety boundaries: no medical diagnoses are asserted, missing modalities are made transparently visible, and unverified validation statistics are never fabricated.
           </p>
         </GlassCard>
       </div>

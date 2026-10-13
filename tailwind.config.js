@@ -41,7 +41,7 @@ export default {
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       boxShadow: {
-        'glow-cyan': '0 0 25px rgba(0, 229, 255, 0.25)',
+        'glow-cyan': '0 0 25px rgba(0, 229, 255, 0.29)',
         'glow-cyan-sm': '0 0 12px rgba(0, 229, 255, 0.18)',
         'glow-violet': '0 0 25px rgba(139, 92, 246, 0.25)',
         'glow-red': '0 0 25px rgba(239, 68, 68, 0.25)',
@@ -50,12 +50,17 @@ export default {
       animation: {
         'pulse-subtle': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'scanline': 'scanline 8s linear infinite',
+        'fadeIn': 'fadeIn 0.3s ease-in-out',
       },
       keyframes: {
         scanline: {
           '0%': { transform: 'translateY(-100%)' },
           '100%': { transform: 'translateY(1000%)' },
-        }
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
       }
     },
   },

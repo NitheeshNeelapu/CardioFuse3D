@@ -73,24 +73,24 @@ export const ModalityPanel: React.FC = () => {
           />
         </div>
 
-        {/* Text Toggle */}
+        {/* Symptom Narrative Toggle */}
         <div className="flex items-center justify-between py-1">
           <div className="flex items-center gap-2">
             <FileText className="w-3.5 h-3.5 text-pink-400" />
             <div>
               <span className="text-xs font-semibold text-slate-200 block">
-                Text Evidence
+                Symptom Narrative
               </span>
               <span className="text-[10px] font-mono text-slate-400">
-                Unstructured clinical symptom notes
+                Unstructured patient symptom text
               </span>
             </div>
           </div>
           <ToggleSwitch
-            checked={modalities.text}
-            onChange={() => toggleModality('text')}
+            checked={modalities.symptoms}
+            onChange={() => toggleModality('symptoms')}
             activeColor="pink"
-            id="toggle-text"
+            id="toggle-symptoms"
           />
         </div>
       </div>

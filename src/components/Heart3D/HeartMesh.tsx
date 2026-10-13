@@ -167,28 +167,27 @@ export const HeartMesh: React.FC = () => {
         <mesh position={[0.75, -0.9, -0.15]} material={pulmonaryGlassMaterial}>
           <cylinderGeometry args={[0.15, 0.15, 0.5, 20]} />
         </mesh>
+        {/* Great Vessels */}
+        <group>
+          <mesh geometry={aortaGeo} material={aortaGlassMaterial} />
+          <mesh geometry={branch1Geo} material={aortaGlassMaterial} />
+          <mesh geometry={branch2Geo} material={aortaGlassMaterial} />
+          <mesh geometry={branch3Geo} material={aortaGlassMaterial} />
+
+          <mesh geometry={pulmonaryGeo} material={pulmonaryGlassMaterial} />
+
+          <mesh position={[-0.55, 1.45, -0.25]} rotation={[0, 0.4, 0.2]} material={pulmonaryGlassMaterial}>
+            <cylinderGeometry args={[0.11, 0.11, 0.6, 16]} />
+          </mesh>
+
+          <mesh position={[0.45, 1.4, -0.3]} rotation={[0, -0.4, -0.2]} material={pulmonaryGlassMaterial}>
+            <cylinderGeometry args={[0.11, 0.11, 0.6, 16]} />
+          </mesh>
+        </group>
+
+        {/* Selectable Coronary Arteries (LAD, LCX, RCA) */}
+        <VesselMesh />
       </group>
-
-      {/* Great Vessels */}
-      <group>
-        <mesh geometry={aortaGeo} material={aortaGlassMaterial} />
-        <mesh geometry={branch1Geo} material={aortaGlassMaterial} />
-        <mesh geometry={branch2Geo} material={aortaGlassMaterial} />
-        <mesh geometry={branch3Geo} material={aortaGlassMaterial} />
-
-        <mesh geometry={pulmonaryGeo} material={pulmonaryGlassMaterial} />
-
-        <mesh position={[-0.55, 1.45, -0.25]} rotation={[0, 0.4, 0.2]} material={pulmonaryGlassMaterial}>
-          <cylinderGeometry args={[0.11, 0.11, 0.6, 16]} />
-        </mesh>
-
-        <mesh position={[0.45, 1.4, -0.3]} rotation={[0, -0.4, -0.2]} material={pulmonaryGlassMaterial}>
-          <cylinderGeometry args={[0.11, 0.11, 0.6, 16]} />
-        </mesh>
-      </group>
-
-      {/* Selectable Coronary Arteries (LAD, LCX, RCA) */}
-      <VesselMesh />
     </group>
   );
 };

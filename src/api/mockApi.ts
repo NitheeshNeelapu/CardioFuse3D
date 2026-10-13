@@ -1,14 +1,13 @@
-import { Patient } from '../types/patient';
+import { Patient, PatientInput } from '../types/patient';
 import { Vessel } from '../types/vessel';
 import { ModalityState } from '../types/modality';
-import { PredictionResult, VesselEvidence } from '../types/model';
+import { PredictionResult, VesselEvidence, ProvenanceData } from '../types/model';
+import { computeDemoPrediction, getDemoVesselEvidence, resolvePatient } from '../data/demoPredictions';
 import { DEMO_PATIENTS, demoPatient01 } from '../data/demoPatient';
-import { computeDemoPrediction, getDemoVesselEvidence } from '../data/demoPredictions';
-import { ExplainResponse } from './types';
+import { ExplainResponse, HealthResponse } from './types';
 
-// Helper for simulated latency (300ms - 700ms)
-const simulateDelay = (minMs: number = 300, maxMs: number = 700): Promise<void> => {
-  const ms = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+// Deterministic delay for demonstration (150ms)
+const simulateDelay = (ms: number = 150): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
@@ -22,56 +21,76 @@ export const getMockApiErrorSimulation = () => shouldSimulateError;
 
 export const mockApi = {
   async getPatient(patientId: string): Promise<Patient> {
-    await simulateDelay(350, 600);
+    await simulateDelay(100);
     if (shouldSimulateError) {
-      throw new Error('Simulated network anomaly: Unable to retrieve patient record.');
+      throw new Error('Unable to retrieve patient profile.');
     }
-    const patient = DEMO_PATIENTS[patientId] || demoPatient01;
+    const patient = DEMO_PATIENTS[patientId] || DEMO_PATIENTS['DEMO-00482'] || demoPatient01;
     return JSON.parse(JSON.stringify(patient));
   },
 
   async predict(
-    patientId: string,
+    patient: Patient | string | PatientInput,
     selectedVessel: Vessel,
     modalities: ModalityState
   ): Promise<PredictionResult> {
-    await simulateDelay(350, 650);
+    await simulateDelay(150);
     if (shouldSimulateError) {
-      throw new Error('Simulated network anomaly: Unable to retrieve model output.');
+      throw new Error('Unable to generate model output.');
     }
-    const result = computeDemoPrediction(selectedVessel, modalities, patientId);
+    const resolved = resolvePatient(patient);
+    const result = computeDemoPrediction(selectedVessel, modalities, resolved);
     return JSON.parse(JSON.stringify(result));
   },
 
   async explain(
-    patientId: string,
+    patient: Patient | string | PatientInput,
     selectedVessel: Vessel,
     modalities: ModalityState
   ): Promise<ExplainResponse> {
-    await simulateDelay(300, 500);
+    await simulateDelay(120);
     if (shouldSimulateError) {
-      throw new Error('Simulated network anomaly: Unable to compute model explanations.');
+      throw new Error('Unable to generate model explanations.');
     }
-    const pred = computeDemoPrediction(selectedVessel, modalities, patientId);
+    const resolved = resolvePatient(patient);
+    const pred = computeDemoPrediction(selectedVessel, modalities, resolved);
     return {
       vessel: selectedVessel,
-      features: pred.explanationFeatures,
+      features: pred.features,
       activeModalitiesCount: pred.activeModalitiesCount,
       fusionStrategy: pred.fusionStrategy,
-      attributionMethod: 'Integrated Gradients (Synthetic Multimodal Attribution)',
+      attributionMethod: 'Transparent weighted scorer + occlusion attribution; trained multimodal model is planned',
+      isSynthetic: true,
     };
   },
 
   async getEvidence(
-    patientId: string,
+    patient: Patient | string | PatientInput,
     selectedVessel: Vessel,
     modalities: ModalityState
   ): Promise<VesselEvidence> {
-    await simulateDelay(300, 500);
+    await simulateDelay(120);
     if (shouldSimulateError) {
-      throw new Error('Simulated network anomaly: Unable to load vessel evidence.');
+      throw new Error('Unable to load vessel evidence.');
     }
-    const evidence = getDemoVesselEvidence(selectedVessel, modalities);
+    const resolved = resolvePatient(patient);
+    const evidence = getDemoVesselEvidence(selectedVessel, modalities, resolved);
     return JSON.parse(JSON.stringify(evidence));
+  },
+
+  async getProvenance(patient: Patient | string | PatientInput, modalities: ModalityState): Promise<ProvenanceData> {
+    const resolved = resolvePatient(patient);
+    const pred = computeDemoPrediction('LAD', modalities, resolved);
+    return pred.provenance;
+  },
+
+  async getHealth(): Promise<HealthResponse> {
+    return {
+      status: 'healthy',
+      version: '0.2.0-demo',
+      service: 'cardiofuse-rule-scorer',
+      backendConnected: false,
+      executionMode: 'mock_demo',
+    };
   },
 };

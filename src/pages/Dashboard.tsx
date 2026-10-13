@@ -1,22 +1,34 @@
 import React from 'react';
+import { useAppStore } from '../state/useAppStore';
+import { WelcomeState } from '../components/Dashboard/WelcomeState';
 import { PatientCard } from '../components/Dashboard/PatientCard';
+import { WhatIfPanel } from '../components/Dashboard/WhatIfPanel';
 import { HeartScene } from '../components/Heart3D/HeartScene';
 import { RiskPanel } from '../components/Dashboard/RiskPanel';
 import { ModalityPanel } from '../components/Dashboard/ModalityPanel';
 import { EvidencePanel } from '../components/Dashboard/EvidencePanel';
 import { ExplainabilityPanel } from '../components/Dashboard/ExplainabilityPanel';
+import { AgentPanel } from '../components/Dashboard/AgentPanel';
+import { PatientSummaryPanel } from '../components/Dashboard/PatientSummaryPanel';
 import { GlassCard } from '../components/common/GlassCard';
 
 export const Dashboard: React.FC = () => {
+  const analysisStatus = useAppStore((s) => s.analysisStatus);
+
+  if (analysisStatus === 'idle') {
+    return <WelcomeState />;
+  }
+
   return (
-    <div className="w-full max-w-[1920px] mx-auto px-3 sm:px-4 lg:px-6 py-4 flex-1 flex flex-col">
+    <div className="w-full max-w-[1920px] mx-auto px-3 sm:px-4 lg:px-6 py-4 flex-1 flex flex-col animate-fadeIn">
       {/* 3-Column Widescreen Layout */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start flex-1">
         
         {/* ================= LEFT COLUMN (3 cols on xl / 25% width) ================= */}
-        {/* Patient Profile, Vitals, ECG Analysis Waveform, Cardiac Function, Recent Scans */}
+        {/* Patient Profile, Vitals, What-If Exploration, ECG Waveform */}
         <div className="xl:col-span-3 space-y-4 order-2 xl:order-1">
           <PatientCard />
+          <WhatIfPanel />
         </div>
 
         {/* ================= CENTER COLUMN (5 cols on xl / Primary Visual Focus) ================= */}
@@ -46,6 +58,12 @@ export const Dashboard: React.FC = () => {
 
           {/* Explainability Panel & Distinctive AI Insight Card */}
           <ExplainabilityPanel />
+
+          {/* Tool-Using Missing Evidence Agent */}
+          <AgentPanel />
+
+          {/* Multilingual Patient Explanation & Read Aloud */}
+          <PatientSummaryPanel />
         </div>
 
       </div>

@@ -15,9 +15,9 @@ export const HeartFallback: React.FC = () => {
     RCA: 'Right Coronary Artery',
   };
 
-  const ladScore = prediction?.vesselPredictions.LAD.probability ?? 68;
-  const lcxScore = prediction?.vesselPredictions.LCX.probability ?? 42;
-  const rcaScore = prediction?.vesselPredictions.RCA.probability ?? 28;
+  const ladScore = prediction ? prediction.vesselPredictions.LAD.probability : null;
+  const lcxScore = prediction ? prediction.vesselPredictions.LCX.probability : null;
+  const rcaScore = prediction ? prediction.vesselPredictions.RCA.probability : null;
 
   return (
     <div className="w-full h-full relative flex flex-col items-center justify-center bg-[#030712] rounded-xl overflow-hidden p-4 select-none">
@@ -165,7 +165,7 @@ export const HeartFallback: React.FC = () => {
               : 'bg-black/85 text-cyan-300 border-cyan-500/40 hover:bg-white hover:text-black hover:border-white'
           }`}
         >
-          LAD • {ladScore}%
+          {ladScore !== null ? `LAD • ${ladScore}/100 (Demo score)` : 'LAD • Awaiting model output'}
         </button>
 
         {/* LCX Tag */}
@@ -179,7 +179,7 @@ export const HeartFallback: React.FC = () => {
               : 'bg-black/85 text-violet-300 border-violet-500/40 hover:bg-white hover:text-black hover:border-white'
           }`}
         >
-          LCX • {lcxScore}%
+          {lcxScore !== null ? `LCX • ${lcxScore}/100 (Demo score)` : 'LCX • Awaiting model output'}
         </button>
 
         {/* RCA Tag */}
@@ -193,7 +193,7 @@ export const HeartFallback: React.FC = () => {
               : 'bg-black/85 text-pink-300 border-pink-500/40 hover:bg-white hover:text-black hover:border-white'
           }`}
         >
-          RCA • {rcaScore}%
+          {rcaScore !== null ? `RCA • ${rcaScore}/100 (Demo score)` : 'RCA • Awaiting model output'}
         </button>
 
         {/* Hover Tooltip Overlay */}

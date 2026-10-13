@@ -1,8 +1,16 @@
 import React from 'react';
 import { Database, Activity, FileText, Cpu, ArrowDown, Heart, BarChart3, Layers } from 'lucide-react';
 import { GlassCard } from '../common/GlassCard';
+import { useAppStore } from '../../state/useAppStore';
 
 export const DataFlowDiagram: React.FC = () => {
+  const prediction = useAppStore((s) => s.prediction);
+  const getScore = (id: 'LAD' | 'LCX' | 'RCA') => {
+    if (!prediction) return 'Demo Score';
+    const scoreVal = prediction.scores?.[id]?.score ?? Math.round((prediction.probabilities?.[id] ?? 0) * 100);
+    return `${scoreVal}/100`;
+  };
+
   return (
     <div className="max-w-5xl mx-auto my-6 px-4 py-6 flex-1 space-y-6">
       <GlassCard borderVariant="subtle" padding="lg">
@@ -13,7 +21,7 @@ export const DataFlowDiagram: React.FC = () => {
             MULTIMODAL LATE-FUSION PIPELINE
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-mono">
-            How CARDIOAI Works
+            How CARDIOFUSE 3D Works
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 mt-2 max-w-xl mx-auto">
             From multimodal patient evidence streams to vessel-specific 3D anatomical risk projections with synchronized explainability.
@@ -31,10 +39,10 @@ export const DataFlowDiagram: React.FC = () => {
               </div>
               <h4 className="text-xs font-bold text-white font-mono uppercase">1. Structured Clinical</h4>
               <p className="text-[11px] text-slate-400 mt-1">
-                Age, Blood Pressure (118/76 mmHg), BMI (22.7), Resting HR (72 bpm)
+                User-entered vitals (Age, Sex, Blood Pressure, Cholesterol, Resting HR, BMI)
               </p>
               <div className="mt-3 pt-2 border-t border-white/5 text-[10px] font-mono text-cyan-400">
-                Raw Patient Data
+                User Clinical Intake
               </div>
             </div>
 
@@ -45,10 +53,10 @@ export const DataFlowDiagram: React.FC = () => {
               </div>
               <h4 className="text-xs font-bold text-white font-mono uppercase">2. Physiological ECG</h4>
               <p className="text-[11px] text-slate-400 mt-1">
-                Continuous 12-lead precordial waveforms (HR 72, PR 160ms, QTc 412ms)
+                Optional ECG waveform (Synthetic pattern for interface visualization or Not Provided)
               </p>
               <div className="mt-3 pt-2 border-t border-white/5 text-[10px] font-mono text-violet-400">
-                High-Frequency Waveform
+                Visualization Only
               </div>
             </div>
 
@@ -62,7 +70,7 @@ export const DataFlowDiagram: React.FC = () => {
                 Clinical intake narrative tokens, exertional descriptors
               </p>
               <div className="mt-3 pt-2 border-t border-white/5 text-[10px] font-mono text-pink-400">
-                Clinical Text NLP
+                Clinical Text Intake
               </div>
             </div>
           </div>
@@ -75,21 +83,21 @@ export const DataFlowDiagram: React.FC = () => {
           {/* Tier 2: Domain Encoders */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 text-center">
-              <span className="text-[10px] font-mono text-cyan-300 block mb-1">CLINICAL ENCODER</span>
+              <span className="text-[10px] font-mono text-cyan-300 block mb-1">CLINICAL ENCODER (PLANNED)</span>
               <p className="text-xs text-white font-mono font-semibold">Multilayer Perceptron (MLP)</p>
-              <span className="text-[10px] text-slate-400 mt-1 block">Latent dim: 64</span>
+              <span className="text-[10px] text-slate-400 mt-1 block">Rule weights in current demo</span>
             </div>
 
             <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 text-center">
-              <span className="text-[10px] font-mono text-violet-300 block mb-1">PHYSIOLOGICAL ENCODER</span>
+              <span className="text-[10px] font-mono text-violet-300 block mb-1">PHYSIOLOGICAL ENCODER (PLANNED)</span>
               <p className="text-xs text-white font-mono font-semibold">1D-CNN (ResNet-1D)</p>
-              <span className="text-[10px] text-slate-400 mt-1 block">Latent dim: 128</span>
+              <span className="text-[10px] text-slate-400 mt-1 block">Interval heuristics in demo</span>
             </div>
 
             <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 text-center">
-              <span className="text-[10px] font-mono text-pink-300 block mb-1">TEXT ENCODER</span>
+              <span className="text-[10px] font-mono text-pink-300 block mb-1">TEXT ENCODER (PLANNED)</span>
               <p className="text-xs text-white font-mono font-semibold">Clinical Transformer</p>
-              <span className="text-[10px] text-slate-400 mt-1 block">Latent dim: 768</span>
+              <span className="text-[10px] text-slate-400 mt-1 block">Keyword occlusion in demo</span>
             </div>
           </div>
 
@@ -103,11 +111,11 @@ export const DataFlowDiagram: React.FC = () => {
             <div className="flex items-center justify-center gap-2 mb-2 text-cyan-300">
               <Cpu className="w-6 h-6 animate-pulse" />
               <h3 className="text-base sm:text-lg font-extrabold tracking-wide uppercase font-mono">
-                Late Fusion & Cross-Attention Engine
+                Multimodal Fusion & Scoring Engine
               </h3>
             </div>
             <p className="text-xs text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              Synthesizes domain representations with cross-modality attention weights. Dynamically masks absent inputs (such as disabled ECG) without performance collapse or synthetic fabrication.
+              Synthesizes domain evidence (clinical + ECG + text + ECG photo) via a transparent weighted multimodal scorer. A tool-using LLM agent provides clinical explanation, multilingual translation, and paper photo extraction. The LLM never computes or modifies risk probabilities.
             </p>
           </div>
 
@@ -120,19 +128,22 @@ export const DataFlowDiagram: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono">
             <div className="p-4 rounded-xl bg-[#08111F] border border-cyan-400/50 text-center">
               <div className="text-xs font-bold text-cyan-300">LAD PROJECTION</div>
-              <div className="text-xl font-bold text-white mt-1">68%</div>
+              <div className="text-lg font-bold text-white mt-1">{getScore('LAD')}</div>
+              <div className="text-[10px] text-amber-300/90 font-mono">Rule-based demo score</div>
               <p className="text-[10px] text-slate-400 mt-1">Anterior wall & apex projection</p>
             </div>
 
             <div className="p-4 rounded-xl bg-[#08111F] border border-violet-400/50 text-center">
               <div className="text-xs font-bold text-violet-300">LCX PROJECTION</div>
-              <div className="text-xl font-bold text-white mt-1">42%</div>
+              <div className="text-lg font-bold text-white mt-1">{getScore('LCX')}</div>
+              <div className="text-[10px] text-amber-300/90 font-mono">Rule-based demo score</div>
               <p className="text-[10px] text-slate-400 mt-1">Lateral ventricular wall projection</p>
             </div>
 
             <div className="p-4 rounded-xl bg-[#08111F] border border-pink-400/50 text-center">
               <div className="text-xs font-bold text-pink-300">RCA PROJECTION</div>
-              <div className="text-xl font-bold text-white mt-1">28%</div>
+              <div className="text-lg font-bold text-white mt-1">{getScore('RCA')}</div>
+              <div className="text-[10px] text-amber-300/90 font-mono">Rule-based demo score</div>
               <p className="text-[10px] text-slate-400 mt-1">Inferior & right ventricular projection</p>
             </div>
           </div>

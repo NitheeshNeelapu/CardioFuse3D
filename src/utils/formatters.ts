@@ -10,10 +10,10 @@ export function formatPercentage(val: number | null | undefined, fallback: strin
 export function formatModalityLabel(modality: Modality): string {
   switch (modality) {
     case 'clinical':
-      return 'Clinical Tabular';
+      return 'Clinical Evidence';
     case 'ecg':
-      return '12-Lead ECG';
-    case 'text':
+      return 'ECG Signal';
+    case 'symptoms':
       return 'Symptom Narrative';
     default:
       return modality;
@@ -26,7 +26,7 @@ export function getModalityColor(modality: Modality): string {
       return '#00E5FF'; // cyan
     case 'ecg':
       return '#8B5CF6'; // violet
-    case 'text':
+    case 'symptoms':
       return '#EC4899'; // magenta / pink
     default:
       return '#38BDF8';

@@ -2,12 +2,12 @@ import React from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { ProvenanceModal } from '../Dashboard/ProvenanceModal';
+import { PatientInputPanel } from '../PatientInput/PatientInputPanel';
+import { PipelineProgressModal } from '../AnalysisPipeline/PipelineProgressModal';
 import { useAppStore } from '../../state/useAppStore';
 import { AlertCircle, AlertTriangle, RefreshCw, X } from 'lucide-react';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const isLoading = useAppStore((s) => s.isLoading);
-  const loadingMessage = useAppStore((s) => s.loadingMessage);
   const error = useAppStore((s) => s.error);
   const retryAnalysis = useAppStore((s) => s.retryAnalysis);
   const setError = useAppStore((s) => s.setError);
@@ -24,14 +24,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
       {/* Main Header */}
       <Header />
-
-      {/* Global Async Loading Overlay or Subtle Top Bar */}
-      {isLoading && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-black/90 border border-cyan-400 text-cyan-300 shadow-2xl flex items-center gap-2.5 font-mono text-xs animate-fadeIn backdrop-blur-md">
-          <RefreshCw className="w-4 h-4 animate-spin text-cyan-400" />
-          <span>{loadingMessage || 'Analyzing evidence…'}</span>
-        </div>
-      )}
 
       {/* Global Error Banner with Retry Option (Acceptance Test 8) */}
       {error && (
@@ -65,6 +57,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
       {/* Page Content */}
       <main className="flex-1 w-full flex flex-col">{children}</main>
+
+      {/* Manual Patient Evidence Intake / Edit Panel */}
+      <PatientInputPanel />
+
+      {/* 5-Stage Multimodal Fusion Pipeline Animation Modal */}
+      <PipelineProgressModal />
 
       {/* Model & Data Provenance Modal */}
       <ProvenanceModal />

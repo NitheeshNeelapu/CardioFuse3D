@@ -109,9 +109,9 @@ export const VesselMesh: React.FC = () => {
   const lcxVisuals = getVesselVisuals('LCX');
   const rcaVisuals = getVesselVisuals('RCA');
 
-  const ladScore = prediction?.vesselPredictions.LAD.probability ?? 68;
-  const lcxScore = prediction?.vesselPredictions.LCX.probability ?? 42;
-  const rcaScore = prediction?.vesselPredictions.RCA.probability ?? 28;
+  const ladScore = prediction ? prediction.vesselPredictions.LAD.probability : null;
+  const lcxScore = prediction ? prediction.vesselPredictions.LCX.probability : null;
+  const rcaScore = prediction ? prediction.vesselPredictions.RCA.probability : null;
 
   return (
     <group>

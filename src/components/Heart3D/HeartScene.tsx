@@ -61,10 +61,10 @@ export const HeartScene: React.FC = () => {
   // Manual fallback toggle for Test 10 verification
   const [forceFallback, setForceFallback] = useState<boolean>(false);
 
-  const vessels: { id: Vessel; name: string; score: number }[] = [
-    { id: 'LAD', name: 'LAD', score: prediction?.vesselPredictions.LAD.probability ?? 68 },
-    { id: 'LCX', name: 'LCX', score: prediction?.vesselPredictions.LCX.probability ?? 42 },
-    { id: 'RCA', name: 'RCA', score: prediction?.vesselPredictions.RCA.probability ?? 28 },
+  const vessels: { id: Vessel; name: string; score: number | null }[] = [
+    { id: 'LAD', name: 'LAD', score: prediction ? prediction.vesselPredictions.LAD.probability : null },
+    { id: 'LCX', name: 'LCX', score: prediction ? prediction.vesselPredictions.LCX.probability : null },
+    { id: 'RCA', name: 'RCA', score: prediction ? prediction.vesselPredictions.RCA.probability : null },
   ];
 
   return (
@@ -105,7 +105,7 @@ export const HeartScene: React.FC = () => {
       </div>
 
       {/* Main 3D Canvas / Viewport */}
-      <div className="flex-1 w-full min-h-[380px] lg:min-h-[460px] relative rounded-xl my-2 overflow-hidden bg-radial-gradient">
+      <div className="flex-1 w-full min-h-[380px] lg:min-h-[460px] relative rounded-xl my-2 overflow-hidden bg-[#030712]">
         {/* Subtle radial background glow */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(0,229,255,0.06)_0%,_transparent_70%)] pointer-events-none" />
 
@@ -204,7 +204,7 @@ export const HeartScene: React.FC = () => {
                       isSelected ? 'text-slate-900 font-bold' : 'text-slate-400'
                     }`}
                   >
-                    {v.score}%
+                    {v.score !== null ? `${v.score}/100` : '--'}
                   </span>
                 </button>
               );

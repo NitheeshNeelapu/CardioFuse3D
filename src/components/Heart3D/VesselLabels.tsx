@@ -1,14 +1,13 @@
 import React from 'react';
 import { Html } from '@react-three/drei';
 import { Vessel } from '../../types/vessel';
-import { useAppStore } from '../../state/useAppStore';
 
 interface VesselLabelsProps {
   vessel: Vessel;
   position: [number, number, number];
   isHovered: boolean;
   isSelected: boolean;
-  probability: number;
+  probability: number | null;
 }
 
 export const VesselLabels: React.FC<VesselLabelsProps> = ({
@@ -25,22 +24,28 @@ export const VesselLabels: React.FC<VesselLabelsProps> = ({
   };
 
   return (
-    <Html position={position} center distanceFactor={8} zIndexRange={[100, 0]}>
-      <div className="pointer-events-none select-none transition-all duration-200">
-        {/* Hover Tooltip as specified:
-            “LAD
-            Left Anterior Descending Artery
-            Click to inspect” */}
+    <Html position={position} center distanceFactor={8} zIndexRange={[100, 0]} occlude={false}>
+      <div className="pointer-events-none select-none transition-all duration-200 whitespace-nowrap">
+        {/* Hover Tooltip */}
         {isHovered && !isSelected && (
-          <div className="mb-2 p-2 rounded-lg bg-black/90 border border-cyan-400 text-left shadow-2xl backdrop-blur-md min-w-[190px] animate-fadeIn">
+          <div className="mb-2 p-2 rounded-lg bg-black/90 border border-cyan-400 text-left shadow-2xl backdrop-blur-md min-w-[200px] animate-fadeIn">
             <div className="text-xs font-bold font-mono text-cyan-300">
               {vessel}
             </div>
             <div className="text-[10px] text-slate-200 leading-tight">
               {fullNames[vessel]}
             </div>
-            <div className="text-[9px] font-mono text-cyan-400 mt-1 flex items-center gap-1 font-semibold">
-              <span>Click to inspect</span>
+            {probability !== null ? (
+              <div className="text-[9px] font-mono text-amber-300 mt-1">
+                Demo score: {probability}/100 (Mock mode)
+              </div>
+            ) : (
+              <div className="text-[9px] font-mono text-slate-400 mt-1">
+                Awaiting demonstration analysis
+              </div>
+            )}
+            <div className="text-[9px] font-mono text-cyan-400 mt-0.5 flex items-center gap-1 font-semibold">
+              <span>Click to inspect territory</span>
             </div>
           </div>
         )}
@@ -55,7 +60,7 @@ export const VesselLabels: React.FC<VesselLabelsProps> = ({
               : 'bg-black/85 text-cyan-300 border-cyan-500/40 opacity-90'
           }`}
         >
-          {vessel} • {probability}%
+          {probability !== null ? `${vessel} • ${probability}/100 (Demo score)` : `${vessel} • Awaiting model output`}
         </div>
       </div>
     </Html>

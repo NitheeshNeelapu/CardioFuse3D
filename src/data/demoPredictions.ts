@@ -1,367 +1,385 @@
-import { Vessel } from '../types/vessel';
-import { Modality, ModalityState, ModalityContribution, ModalityEvidenceItem } from '../types/modality';
-import { PredictionResult, VesselPrediction, ExplainabilityFeature, VesselEvidence } from '../types/model';
+import { Vessel, VESSEL_DEFINITIONS } from '../types/vessel';
+import { ModalityState, ModalityContribution, ModalityEvidenceItem } from '../types/modality';
+import { Patient, PatientInput } from '../types/patient';
+import { PredictionResult, VesselPrediction, ExplainabilityFeature, VesselEvidence, ProvenanceData } from '../types/model';
+import { scoreVessel } from './scorer';
+import { DEMO_PATIENTS, demoPatient01 } from './demoPatient';
 
-// Function to generate deterministic, synchronized predictions based on selected vessel & active modalities
+export function resolvePatient(input: Patient | string | PatientInput): Patient {
+  if (typeof input === 'string') {
+    return DEMO_PATIENTS[input] || DEMO_PATIENTS['DEMO-00482'] || demoPatient01;
+  }
+  if ('vitals' in input && 'clinicalNarrative' in input) {
+    return input as Patient;
+  }
+  const pi = input as PatientInput;
+  return {
+    id: pi.patientId || 'DEMO-00482',
+    name: pi.name || 'Demo Patient',
+    age: pi.age || 28,
+    sex: pi.sex || 'Male',
+    weight: 70,
+    height: 175,
+    bmi: pi.bmi || 22.7,
+    badge: 'SYNTHETIC DATA',
+    isSynthetic: true,
+    clinicalNarrative: pi.symptoms?.narrativeText || 'No clinical narrative.',
+    vitals: {
+      heartRate: pi.restingHeartRate || 72,
+      bloodPressureSys: pi.systolicBP || 118,
+      bloodPressureDia: pi.diastolicBP || 76,
+      spo2: 98,
+    },
+    ecg: {
+      heartRate: pi.restingHeartRate || 72,
+      prInterval: 160,
+      qrsDuration: 96,
+      qtcInterval: 412,
+      rhythm: pi.ecg?.pattern || 'Normal Sinus Rhythm',
+      leadNotes: pi.ecg?.leadNotes || 'Normal ECG tracing.',
+    },
+    cardiacFunction: {
+      ejectionFraction: 65,
+      lvedv: 100,
+      lvesv: 35,
+      strokeVolume: 65,
+      cardiacOutput: 4.8,
+    },
+    recentScans: [],
+  };
+}
+
 export function computeDemoPrediction(
   selectedVessel: Vessel,
   modalities: ModalityState,
-  patientId: string = 'DEMO-00482'
+  patientOrInput: Patient | string | PatientInput = demoPatient01
 ): PredictionResult {
-  const isEcgActive = modalities.ecg;
-  const isClinicalActive = modalities.clinical;
-  const isTextActive = modalities.text;
+  const patient = resolvePatient(patientOrInput);
 
-  // Base raw weights for each vessel under full 3-modality configuration
-  const vesselConfigs: Record<
-    Vessel,
-    {
-      fullProbability: number;
-      clinicalWeight: number;
-      ecgWeight: number;
-      textWeight: number;
-      fullName: string;
-      territory: string;
-    }
-  > = {
-    LAD: {
-      fullProbability: 68,
-      clinicalWeight: 24,
-      ecgWeight: 18,
-      textWeight: 26,
-      fullName: 'Left Anterior Descending Artery',
-      territory: 'Anterior ventricular wall, apex, anterior 2/3 interventricular septum',
-    },
-    LCX: {
-      fullProbability: 42,
-      clinicalWeight: 16,
-      ecgWeight: 12,
-      textWeight: 14,
-      fullName: 'Left Circumflex Artery',
-      territory: 'Posterolateral wall of left ventricle, anterolateral papillary muscle',
-    },
-    RCA: {
-      fullProbability: 28,
-      clinicalWeight: 11,
-      ecgWeight: 8,
-      textWeight: 9,
-      fullName: 'Right Coronary Artery',
-      territory: 'Right ventricle, posterior wall of left ventricle, inferior septum, AV node',
-    },
+  const isClinicalActive = Boolean(modalities.clinical);
+  const isEcgActive = Boolean(modalities.ecg);
+  const isTextActive = Boolean(modalities.symptoms ?? (modalities as any).text);
+
+  // Compute probabilities for all 3 vessels using transparent rule-based scorer
+  const ladScorer = scoreVessel(patient, 'LAD', modalities);
+  const lcxScorer = scoreVessel(patient, 'LCX', modalities);
+  const rcaScorer = scoreVessel(patient, 'RCA', modalities);
+
+  const probabilities: Record<Vessel, number> = {
+    LAD: ladScorer.probability,
+    LCX: lcxScorer.probability,
+    RCA: rcaScorer.probability,
   };
 
+  const scores: Record<Vessel, { score: number; display: string }> = {
+    LAD: { score: ladScorer.probability, display: `${ladScorer.probability}/100 — Demo score` },
+    LCX: { score: lcxScorer.probability, display: `${lcxScorer.probability}/100 — Demo score` },
+    RCA: { score: rcaScorer.probability, display: `${rcaScorer.probability}/100 — Demo score` },
+  };
+
+  // Build dynamic explainability features using patient's real values
+  const clinicalFeatures: ExplainabilityFeature[] = [];
+  if (isClinicalActive) {
+    clinicalFeatures.push({
+      feature: `Age (${patient.age} yrs)`,
+      category: 'clinical',
+      impact: Math.min(85, Math.max(15, Math.round(patient.age * 0.75))),
+      direction: patient.age > 45 ? 'positive' : 'negative',
+      description: `Patient age ${patient.age} in rule-based scorer baseline`,
+    });
+    clinicalFeatures.push({
+      feature: `Blood Pressure (${patient.vitals.bloodPressureSys}/${patient.vitals.bloodPressureDia} mmHg)`,
+      category: 'clinical',
+      impact: Math.min(80, Math.max(15, Math.round((patient.vitals.bloodPressureSys / 160) * 55))),
+      direction: patient.vitals.bloodPressureSys > 125 ? 'positive' : 'negative',
+      description: 'Hemodynamic pressure loading contribution',
+    });
+    clinicalFeatures.push({
+      feature: `BMI (${patient.bmi} kg/m²)`,
+      category: 'clinical',
+      impact: Math.min(65, Math.max(10, Math.round((patient.bmi / 30) * 35))),
+      direction: patient.bmi > 24 ? 'positive' : 'negative',
+      description: 'Metabolic body mass index weighting',
+    });
+    clinicalFeatures.push({
+      feature: `Resting Heart Rate (${patient.vitals.heartRate} bpm)`,
+      category: 'clinical',
+      impact: Math.min(60, Math.max(10, Math.round((patient.vitals.heartRate / 100) * 35))),
+      direction: patient.vitals.heartRate > 75 ? 'positive' : 'negative',
+      description: 'Resting pulse baseline',
+    });
+  }
+
+  const ecgFeatures: ExplainabilityFeature[] = [];
+  if (isEcgActive) {
+    ecgFeatures.push({
+      feature: `Rhythm: ${patient.ecg.rhythm}`,
+      category: 'ecg',
+      impact: 45,
+      direction: patient.ecg.rhythm.toLowerCase().includes('normal') ? 'negative' : 'positive',
+      description: 'Physiological cardiac rhythm interpretation',
+    });
+    ecgFeatures.push({
+      feature: `Intervals (PR ${patient.ecg.prInterval}ms, QTc ${patient.ecg.qtcInterval}ms, QRS ${patient.ecg.qrsDuration}ms)`,
+      category: 'ecg',
+      impact: Math.min(75, Math.max(20, Math.round((patient.ecg.qtcInterval / 450) * 45))),
+      direction: patient.ecg.qtcInterval > 420 ? 'positive' : 'negative',
+      description: 'Conduction transit timing and repolarization interval',
+    });
+    if (patient.ecg.leadNotes) {
+      ecgFeatures.push({
+        feature: `Lead Findings: "${patient.ecg.leadNotes}"`,
+        category: 'ecg',
+        impact: patient.id === 'DEMO-00519' ? 70 : 30,
+        direction: patient.id === 'DEMO-00519' ? 'positive' : 'negative',
+        description: 'Vessel-territory specific lead wave morphology',
+      });
+    }
+  }
+
+  const textFeatures: ExplainabilityFeature[] = [];
+  if (isTextActive && patient.clinicalNarrative) {
+    const textLower = patient.clinicalNarrative.toLowerCase();
+    if (textLower.includes('substernal')) {
+      textFeatures.push({
+        feature: 'Narrative keyword: "substernal"',
+        category: 'symptoms',
+        impact: 65,
+        direction: 'positive',
+        description: 'Substernal chest sensation indicator',
+      });
+    }
+    if (textLower.includes('exertional')) {
+      textFeatures.push({
+        feature: 'Narrative keyword: "exertional"',
+        category: 'symptoms',
+        impact: 55,
+        direction: 'positive',
+        description: 'Exertional symptom trigger indicator',
+      });
+    }
+    if (textLower.includes('fatigue')) {
+      textFeatures.push({
+        feature: 'Narrative keyword: "fatigue"',
+        category: 'symptoms',
+        impact: 40,
+        direction: 'positive',
+        description: 'Exertional fatigue descriptor',
+      });
+    }
+    if (textLower.includes('no prior') || textLower.includes('no previous')) {
+      textFeatures.push({
+        feature: 'Narrative keyword: "no prior history"',
+        category: 'symptoms',
+        impact: 45,
+        direction: 'negative',
+        description: 'Protective absence of prior cardiac events',
+      });
+    }
+  }
+
+  const allFeatures: ExplainabilityFeature[] = [
+    ...clinicalFeatures,
+    ...ecgFeatures,
+    ...textFeatures,
+  ];
+
   const vesselPredictions: Record<Vessel, VesselPrediction> = {} as Record<Vessel, VesselPrediction>;
+  const vessels: Vessel[] = ['LAD', 'LCX', 'RCA'];
 
-  (['LAD', 'LCX', 'RCA'] as Vessel[]).forEach((vessel) => {
-    const config = vesselConfigs[vessel];
-
-    let calcClinical: number | null = null;
-    let calcEcg: number | null = null;
-    let calcText: number | null = null;
-    let calcProb = 0;
-
-    // Build contributions based on active toggles
-    if (isClinicalActive && isEcgActive && isTextActive) {
-      calcClinical = config.clinicalWeight;
-      calcEcg = config.ecgWeight;
-      calcText = config.textWeight;
-      calcProb = config.fullProbability;
-    } else {
-      // Recalculate using available evidence only without synthesizing absent modalities
-      let activeSum = 0;
-      let count = 0;
-      if (isClinicalActive) {
-        calcClinical = Math.round(config.clinicalWeight * 1.25);
-        activeSum += calcClinical;
-        count++;
-      }
-      if (isEcgActive) {
-        calcEcg = Math.round(config.ecgWeight * 1.25);
-        activeSum += calcEcg;
-        count++;
-      }
-      if (isTextActive) {
-        calcText = Math.round(config.textWeight * 1.25);
-        activeSum += calcText;
-        count++;
-      }
-      calcProb = count > 0 ? Math.min(100, Math.round(activeSum)) : 0;
-    }
-
-    // Explainability Features
-    const features: ExplainabilityFeature[] = [];
-
-    if (isClinicalActive) {
-      if (vessel === 'LAD') {
-        features.push({
-          feature: 'Age Factor (28 yrs baseline)',
-          category: 'clinical',
-          impact: 42,
-          direction: 'positive',
-          description: 'Young adult demographic profile within synthetic training cohort.',
-        });
-        features.push({
-          feature: 'Blood Pressure (118/76 mmHg)',
-          category: 'clinical',
-          impact: 38,
-          direction: 'positive',
-          description: 'Normotensive physiological baseline representation.',
-        });
-        features.push({
-          feature: 'Risk Factors / Lipids (Synthetic vector)',
-          category: 'clinical',
-          impact: 28,
-          direction: 'positive',
-          description: 'Absence of secondary vascular markers.',
-        });
-      } else if (vessel === 'LCX') {
-        features.push({
-          feature: 'Blood Pressure / Hemodynamics',
-          category: 'clinical',
-          impact: 34,
-          direction: 'positive',
-          description: 'Circumflex lateral territory baseline.',
-        });
-        features.push({
-          feature: 'Risk Factors profile',
-          category: 'clinical',
-          impact: 26,
-          direction: 'positive',
-          description: 'Non-elevated systemic profile.',
-        });
-      } else {
-        features.push({
-          feature: 'Clinical Resting Parameters',
-          category: 'clinical',
-          impact: 29,
-          direction: 'positive',
-          description: 'Right coronary hemodynamic representation.',
-        });
-        features.push({
-          feature: 'Age and Metabolic baseline',
-          category: 'clinical',
-          impact: 22,
-          direction: 'positive',
-          description: 'Standard metabolic representation in demo data.',
-        });
-      }
-    }
-
-    if (isEcgActive) {
-      if (vessel === 'LAD') {
-        features.push({
-          feature: 'Rhythm pattern (Normal Sinus)',
-          category: 'ecg',
-          impact: 55,
-          direction: 'positive',
-          description: 'Precordial lead V1-V4 morphology alignment.',
-        });
-        features.push({
-          feature: 'Intervals (PR 160ms, QTc 412ms)',
-          category: 'ecg',
-          impact: 48,
-          direction: 'positive',
-          description: 'Conduction timing within normal demo parameters.',
-        });
-        features.push({
-          feature: 'Waveform features (ST-T morphology)',
-          category: 'ecg',
-          impact: 39,
-          direction: 'positive',
-          description: 'Isoelectric anterior lead ST patterns.',
-        });
-      } else if (vessel === 'LCX') {
-        features.push({
-          feature: 'Lateral lead V5-V6 Waveform vectors',
-          category: 'ecg',
-          impact: 36,
-          direction: 'positive',
-          description: 'Lateral chamber repolarization features.',
-        });
-        features.push({
-          feature: 'Rhythm pattern stability',
-          category: 'ecg',
-          impact: 28,
-          direction: 'positive',
-          description: 'Consistent cardiac rhythm.',
-        });
-      } else {
-        features.push({
-          feature: 'Inferior lead II, III, aVF Waveform vectors',
-          category: 'ecg',
-          impact: 31,
-          direction: 'positive',
-          description: 'Absence of inferior lead morphological deviation.',
-        });
-        features.push({
-          feature: 'Intervals (AV conduction timing)',
-          category: 'ecg',
-          impact: 24,
-          direction: 'positive',
-          description: 'Normal nodal transit features.',
-        });
-      }
-    }
-
-    if (isTextActive) {
-      if (vessel === 'LAD') {
-        features.push({
-          feature: 'Clinical narrative: "Non-anginal exertional awareness"',
-          category: 'text',
-          impact: 64,
-          direction: 'positive',
-          description: 'BioClinicalBERT token embeddings matching anterior wall territory.',
-        });
-        features.push({
-          feature: 'Clinical narrative: "No prior revascularization"',
-          category: 'text',
-          impact: 32,
-          direction: 'negative',
-          description: 'Negative history token weight.',
-        });
-      } else if (vessel === 'LCX') {
-        features.push({
-          feature: 'Clinical narrative: Exertional description embeddings',
-          category: 'text',
-          impact: 41,
-          direction: 'positive',
-          description: 'General thoracic sensation tokens.',
-        });
-      } else {
-        features.push({
-          feature: 'Clinical narrative: Absence of radiating symptoms',
-          category: 'text',
-          impact: 35,
-          direction: 'negative',
-          description: 'Non-radiating symptom token extraction.',
-        });
-      }
-    }
-
-    vesselPredictions[vessel] = {
-      vessel,
-      probability: calcProb,
-      label: config.fullName,
+  vessels.forEach((v) => {
+    const vScorer = v === 'LAD' ? ladScorer : v === 'LCX' ? lcxScorer : rcaScorer;
+    vesselPredictions[v] = {
+      vessel: v,
+      probability: vScorer.probability,
+      demoScore: vScorer.probability,
+      scoreDisplay: `${vScorer.probability}/100 — Demo score`,
+      label: VESSEL_DEFINITIONS[v].fullName,
+      isSynthetic: true,
       modalityContributions: {
-        clinical: calcClinical,
-        ecg: calcEcg,
-        text: calcText,
+        clinical: vScorer.shares.clinical,
+        ecg: vScorer.shares.ecg,
+        symptoms: vScorer.shares.text,
       },
-      features,
+      features: allFeatures,
       aiInsight: {
-        title: 'AI Insight',
-        description: `Model detected a demonstration evidence pattern involving the selected coronary vessel (${vessel}: ${config.fullName}).`,
-        requiredAction: 'Clinical interpretation required.',
-        badge: 'DEMO OUTPUT',
+        title: 'Rule-Based Scorer Insight',
+        description: `Rule-based demo score: ${vScorer.probability}/100 projected for ${v} (${VESSEL_DEFINITIONS[v].fullName}). Computed via transparent weighted scorer + occlusion attribution; trained multimodal model is planned.`,
+        requiredAction: 'Clinical interpretation requires qualified medical assessment.',
       },
     };
   });
 
-  const activeVesselPred = vesselPredictions[selectedVessel];
+  const activePred = vesselPredictions[selectedVessel];
+  const activeScorer = selectedVessel === 'LAD' ? ladScorer : selectedVessel === 'LCX' ? lcxScorer : rcaScorer;
 
-  // Modality contribution array for charts
-  const modalityContributions: ModalityContribution[] = [
+  const contributionsList: ModalityContribution[] = [
     {
       modality: 'clinical',
-      label: 'Clinical',
-      percentage: activeVesselPred.modalityContributions.clinical,
+      label: 'Clinical Data',
+      percentage: activeScorer.shares.clinical,
+      demoWeight: activeScorer.shares.clinical,
       available: isClinicalActive,
+      status: isClinicalActive ? 'available' : 'unavailable',
       color: '#00E5FF',
+      explanation: isClinicalActive
+        ? `Patient metrics (Age ${patient.age}, BP ${patient.vitals.bloodPressureSys}/${patient.vitals.bloodPressureDia})`
+        : 'Clinical evidence stream disabled',
     },
     {
       modality: 'ecg',
-      label: 'ECG',
-      percentage: activeVesselPred.modalityContributions.ecg,
+      label: 'ECG Signal',
+      percentage: activeScorer.shares.ecg,
+      demoWeight: activeScorer.shares.ecg,
       available: isEcgActive,
+      status: isEcgActive ? 'synthetic_demo' : 'unavailable',
       color: '#8B5CF6',
+      explanation: isEcgActive
+        ? `Synthetic demo ECG (${patient.ecg.rhythm}, PR ${patient.ecg.prInterval}ms)`
+        : 'Patient ECG: Not provided (waveform stream omitted)',
     },
     {
-      modality: 'text',
-      label: 'Text',
-      percentage: activeVesselPred.modalityContributions.text,
+      modality: 'symptoms',
+      label: 'Symptom Narrative',
+      percentage: activeScorer.shares.text,
+      demoWeight: activeScorer.shares.text,
       available: isTextActive,
+      status: isTextActive ? 'available' : 'unavailable',
       color: '#EC4899',
+      explanation: isTextActive
+        ? `Narrative text keyword weights ("${patient.clinicalNarrative.slice(0, 45)}...")`
+        : 'No symptom narrative provided',
     },
   ];
 
-  const activeModalitiesCount =
-    (isClinicalActive ? 1 : 0) + (isEcgActive ? 1 : 0) + (isTextActive ? 1 : 0);
+  const missingModalities: string[] = [];
+  if (!isClinicalActive) missingModalities.push('Clinical data (toggled off)');
+  if (!isEcgActive) missingModalities.push('12-Lead ECG (toggled off)');
+  if (!isTextActive) missingModalities.push('Symptom Narrative (toggled off)');
+
+  const activeCount = (isClinicalActive ? 1 : 0) + (isEcgActive ? 1 : 0) + (isTextActive ? 1 : 0);
+
+  const provenance: ProvenanceData = {
+    executionMode: 'Mock/Demo',
+    predictionModel: 'Not connected',
+    clinicalValidation: 'Not performed',
+    inputSource: 'Synthetic demonstration',
+    ecgSource: isEcgActive ? 'Synthetic visualization' : 'Not provided',
+    missingModalities,
+    missingOptionalFields: [],
+    isNumericalOutputSynthetic: true,
+    outputLimitations:
+      'Rule-based demo scorer (not a trained model). Outputs are computed via transparent weighted scoring and occlusion attribution; trained multimodal model is planned.',
+  };
 
   return {
     selectedVessel,
-    probability: activeVesselPred.probability,
-    modalityContributions,
-    vesselPredictions,
+    probability: probabilities[selectedVessel],
+    demoScore: probabilities[selectedVessel],
+    scoreDisplay: `${probabilities[selectedVessel]}/100 — Demo score`,
+    outputLabel: 'SYNTHETIC DEMONSTRATION OUTPUT — NOT CLINICALLY VALIDATED',
+    probabilities,
+    scores,
+    modalityContributions: activePred.modalityContributions,
+    contributionsList,
     evidenceAvailability: {
       clinical: isClinicalActive,
       ecg: isEcgActive,
-      text: isTextActive,
+      symptoms: isTextActive,
     },
-    isDemoData: true,
-    explanationFeatures: activeVesselPred.features,
-    activeModalitiesCount,
+    agreement: 'Not calculated — demo mode',
+    agreementDescription:
+      'Not calculated — demo mode. Defined multi-modality consensus requires a trained predictive model and verified clinical recordings.',
+    features: allFeatures,
+    isModelOutput: false,
+    isSynthetic: true,
+    modelConnected: false,
+    executionMode: 'Mock/Demo',
+    clinicalValidation: 'Not performed',
+    activeModalitiesCount: activeCount,
     totalModalitiesCount: 3,
-    fusionStrategy: isEcgActive
-      ? 'Late Fusion (Cross-Attention Multimodal Concatenation)'
-      : 'Masked Fusion (Dual-Modality Active, ECG Masked)',
-    aiInsight: activeVesselPred.aiInsight,
+    fusionStrategy: 'Transparent Weighted Scorer + Occlusion Attribution (Trained Multimodal Model Planned)',
+    aiInsight: activePred.aiInsight,
+    vesselPredictions,
+    provenance,
   };
 }
 
-// Helper to get structured vessel evidence items
 export function getDemoVesselEvidence(
-  vessel: Vessel,
-  modalities: ModalityState
+  selectedVessel: Vessel,
+  modalities: ModalityState,
+  patientOrInput: Patient | string | PatientInput = demoPatient01
 ): VesselEvidence {
-  const configs: Record<Vessel, { fullName: string; territory: string }> = {
-    LAD: {
-      fullName: 'Left Anterior Descending Artery',
-      territory: 'Anterior ventricular wall, apex, anterior 2/3 of interventricular septum',
-    },
-    LCX: {
-      fullName: 'Left Circumflex Artery',
-      territory: 'Posterolateral wall of left ventricle, anterolateral papillary muscle, left atrium',
-    },
-    RCA: {
-      fullName: 'Right Coronary Artery',
-      territory: 'Right ventricle, posterior 1/3 of interventricular septum, inferior wall, AV node',
-    },
-  };
+  const patient = resolvePatient(patientOrInput);
+
+  const isClinicalActive = Boolean(modalities.clinical);
+  const isEcgActive = Boolean(modalities.ecg);
+  const isSymptomsActive = Boolean(modalities.symptoms ?? (modalities as any).text);
+
+  const info = VESSEL_DEFINITIONS[selectedVessel];
 
   const evidenceItems: ModalityEvidenceItem[] = [
     {
       modality: 'clinical',
       name: 'Clinical Evidence',
-      status: modalities.clinical ? 'AVAILABLE' : 'UNAVAILABLE',
-      description: 'Structured demographics, hemodynamics (BP 118/76), and metabolic parameters.',
-      summary: modalities.clinical ? 'Standardized tabular features embedded via MLP encoder' : 'Clinical tabular inputs omitted from fusion layer',
-      featuresCount: modalities.clinical ? 6 : 0,
+      status: isClinicalActive ? 'available' : 'unavailable',
+      description: isClinicalActive
+        ? `Patient vitals: Age ${patient.age}, BP ${patient.vitals.bloodPressureSys}/${patient.vitals.bloodPressureDia} mmHg, HR ${patient.vitals.heartRate} bpm, BMI ${patient.bmi} kg/m².`
+        : 'Clinical evidence stream disabled.',
+      summary: isClinicalActive ? 'Structured demographic and hemodynamic parameters' : 'Disabled by user toggle',
+      featuresCount: isClinicalActive ? 4 : 0,
+      isPatientData: true,
+      sourceType: isClinicalActive ? 'user_provided' : 'not_provided',
     },
     {
       modality: 'ecg',
-      name: 'ECG Evidence',
-      status: modalities.ecg ? 'AVAILABLE' : 'UNAVAILABLE',
-      description: '12-lead precordial time-series waveform (HR 72 bpm, PR 160ms, QTc 412ms).',
-      summary: modalities.ecg
-        ? 'Lead V1-V6 1D-ResNet temporal embeddings available'
-        : 'ECG evidence unavailable. Recalculated using available evidence.',
-      featuresCount: modalities.ecg ? 3 : 0,
+      name: 'ECG Signal',
+      status: isEcgActive ? 'synthetic_demo' : 'unavailable',
+      description: isEcgActive
+        ? `Synthetic demo ECG (${patient.ecg.rhythm}, HR ${patient.ecg.heartRate} bpm, PR ${patient.ecg.prInterval}ms, QTc ${patient.ecg.qtcInterval}ms). Lead findings: "${patient.ecg.leadNotes}".`
+        : 'Patient ECG: Not provided. Waveform encoder omitted.',
+      summary: isEcgActive
+        ? 'Synthetic visualization waveform pattern'
+        : 'Patient ECG: Not provided',
+      featuresCount: isEcgActive ? 2 : 0,
+      isPatientData: false,
+      sourceType: isEcgActive ? 'synthetic_visualization' : 'not_provided',
     },
     {
-      modality: 'text',
-      name: 'Text Evidence',
-      status: modalities.text ? 'AVAILABLE' : 'UNAVAILABLE',
-      description: 'Unstructured clinical intake narrative and exertional descriptors.',
-      summary: modalities.text ? 'BioClinicalBERT clinical narrative tokens active' : 'Text narrative stream disabled',
-      featuresCount: modalities.text ? 2 : 0,
+      modality: 'symptoms',
+      name: 'Symptom Narrative',
+      status: isSymptomsActive ? 'available' : 'unavailable',
+      description: isSymptomsActive
+        ? `Clinical narrative: "${patient.clinicalNarrative.slice(0, 100)}..."`
+        : 'No clinical symptom narrative provided.',
+      summary: isSymptomsActive ? 'Clinical intake narrative keywords' : 'No narrative provided',
+      featuresCount: isSymptomsActive ? 2 : 0,
+      isPatientData: isSymptomsActive,
+      sourceType: isSymptomsActive ? 'user_provided' : 'not_provided',
     },
   ];
 
   return {
-    vessel,
-    fullName: configs[vessel].fullName,
-    territory: configs[vessel].territory,
-    status: 'Demo interpretation',
+    vessel: selectedVessel,
+    fullName: info.fullName,
+    territory: info.territory,
+    status: 'No vessel-specific clinical evidence available.',
+    hasVesselSpecificEvidence: false,
+    vesselDisclaimer:
+      'Territory anatomical mapping demonstrates UI synchronization only. No angiographic stenosis, lesion, or blockage has been observed or inferred.',
     evidenceItems,
   };
 }
+
+// Backward compatibility aliases
+export const calculatePredictionFromPatientInput = (
+  input: PatientInput,
+  vessel: Vessel,
+  modalities: ModalityState
+) => computeDemoPrediction(vessel, modalities, input);
+
+export const getVesselEvidenceFromPatientInput = (
+  input: PatientInput,
+  vessel: Vessel,
+  modalities: ModalityState
+) => getDemoVesselEvidence(vessel, modalities, input);

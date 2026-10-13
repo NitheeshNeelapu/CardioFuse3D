@@ -1,16 +1,29 @@
-import { Patient } from '../types/patient';
+import { Patient, PatientInput } from '../types/patient';
 import { Vessel } from '../types/vessel';
 import { ModalityState } from '../types/modality';
-import { PredictionResult, VesselEvidence, ExplainabilityFeature } from '../types/model';
+import { PredictionResult, VesselEvidence, ExplainabilityFeature, ProvenanceData } from '../types/model';
+
+/**
+ * ============================================================================
+ * BACKEND INTEGRATION CONTRACT SPECIFICATION
+ * CARDIOFUSE 3D API Contract for Real-Model Backend Integration
+ * ============================================================================
+ */
 
 export interface PredictRequest {
-  patientId: string;
+  patient: Patient | string | PatientInput;
   selectedVessel: Vessel;
   modalities: ModalityState;
 }
 
 export interface ExplainRequest {
-  patientId: string;
+  patient: Patient | string | PatientInput;
+  selectedVessel: Vessel;
+  modalities: ModalityState;
+}
+
+export interface EvidenceRequest {
+  patient: Patient | string | PatientInput;
   selectedVessel: Vessel;
   modalities: ModalityState;
 }
@@ -21,6 +34,7 @@ export interface ExplainResponse {
   activeModalitiesCount: number;
   fusionStrategy: string;
   attributionMethod: string;
+  isSynthetic: boolean;
 }
 
 export interface HealthResponse {
@@ -28,4 +42,13 @@ export interface HealthResponse {
   version: string;
   service: string;
   backendConnected: boolean;
+  executionMode: 'mock_demo' | 'live_model';
+}
+
+export interface GeminiExplanationResponse {
+  explanation: string;
+  source: string;
+  clinicallyValidated: boolean;
+  predictionModelConnected: boolean;
+  disclaimer: string;
 }
