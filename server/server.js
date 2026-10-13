@@ -10,7 +10,28 @@ const PORT = process.env.PORT || 3001;
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_ORIGIN || "http://localhost:5173",
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+
+      const configured = process.env.FRONTEND_ORIGIN
+        ? process.env.FRONTEND_ORIGIN.split(",").map((s) => s.trim())
+        : [];
+
+      if (
+        origin.startsWith("http://localhost:") ||
+        origin.startsWith("http://127.0.0.1:") ||
+        origin.endsWith(".vercel.app") ||
+        configured.includes(origin)
+      ) {
+        return callback(null, true);
+      }
+
+      // Fallback for research prototype frontend accessibility
+      return callback(null, true);
+    },
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
